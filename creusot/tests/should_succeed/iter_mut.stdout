@@ -12,6 +12,7 @@ module Type
   use string.Char
   use floating_point.Single
   use floating_point.Double
+  use seq.Seq
   use prelude.Prelude
   type core_marker_phantomdata 't = 
     | Core_Marker_PhantomData

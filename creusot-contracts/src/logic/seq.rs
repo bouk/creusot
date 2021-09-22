@@ -61,6 +61,13 @@ impl<T> Seq<T> {
         std::process::abort()
     }
 
+    #[trusted]
+    #[logic]
+    #[creusot::builtins = "seq.Seq.singleton"]
+    pub fn singleton(_: T) -> Self {
+        std::process::abort()
+    }
+
     #[logic]
     pub fn tail(self) -> Self {
         self.subsequence(1, self.len())
@@ -84,6 +91,13 @@ impl<T> Seq<T> {
     #[logic]
     #[creusot::builtins = "seq.Seq.snoc"]
     pub fn push(self, _: T) -> Self {
+        std::process::abort()
+    }
+
+    #[trusted]
+    #[logic]
+    #[creusot::builtins = "seq.Seq.(++)"]
+    pub fn concat(self, _: Self) -> Self {
         std::process::abort()
     }
 
