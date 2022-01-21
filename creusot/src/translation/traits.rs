@@ -225,6 +225,9 @@ pub fn resolve_assoc_item_opt(
             Some((leaf_def.item.def_id, leaf_substs))
         }
         ImplSource::Param(_, _) => Some((def_id, substs)),
+        ImplSource::Closure(impl_data) => {
+            Some((impl_data.closure_def_id, impl_data.substs))
+        },
         _ => unimplemented!(),
     }
 }

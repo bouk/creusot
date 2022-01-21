@@ -109,7 +109,8 @@ pub fn item_name(tcx: TyCtxt, def_id: DefId) -> Ident {
 
     match tcx.def_kind(def_id) {
         AssocTy => ident_of_ty(tcx.item_name(def_id)),
-        Ctor(_, _) | Variant | Struct | Enum => ident_path(tcx, def_id),
+        Ctor(_, _) | Variant | Struct | Enum | Closure => ident_path(tcx, def_id),
+
         _ => ident_of(tcx.item_name(def_id)),
     }
 }
@@ -172,6 +173,7 @@ pub enum ItemType {
     Logic,
     Predicate,
     Program,
+    Closure,
     Trait,
     Impl,
     Type,
@@ -219,6 +221,7 @@ pub fn item_type(tcx: TyCtxt<'_>, def_id: DefId) -> ItemType {
                 ItemType::Program
             }
         }
+        DefKind::Closure => ItemType::Closure,
         DefKind::Struct | DefKind::Enum => ItemType::Type,
         DefKind::AssocTy => ItemType::AssocTy,
         dk => ItemType::Unsupported(dk),

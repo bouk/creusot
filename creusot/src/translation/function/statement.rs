@@ -160,7 +160,8 @@ impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
                         } else if util::is_spec(self.tcx, *def_id) {
                             return;
                         } else {
-                            self.ctx.crash_and_error(si.span, "closures are not yet supported")
+                            return;
+                            // self.ctx.crash_and_error(si.span, "closures are not yet supported")
                         }
                     }
                     _ => self.ctx.crash_and_error(

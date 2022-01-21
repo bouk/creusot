@@ -4,6 +4,7 @@ use indexmap::IndexMap;
 
 use petgraph::graphmap::DiGraphMap;
 use petgraph::EdgeDirection::Incoming;
+use rustc_hir::def::DefKind;
 use why3::declaration::{CloneKind, CloneSubst, Decl, DeclClone, Use};
 use why3::{Ident, QName};
 
@@ -140,7 +141,10 @@ impl CloneInfo<'tcx> {
 
     // TODO: When traits stop holding all functions we can remove the last two arguments
     pub fn qname(&self, tcx: TyCtxt, def_id: DefId) -> QName {
-        self.qname_raw(item_name(tcx, def_id))
+        self.qname_raw(match tcx.def_kind(def_id) {
+            DefKind::Closure => Ident::build("closure"),
+            _ => item_name(tcx, def_id),
+        })
     }
 
     pub fn qname_sym(&self, sym: rustc_span::symbol::Symbol) -> QName {
@@ -199,6 +203,7 @@ impl<'tcx> CloneMap<'tcx> {
             debug!("inserting {:?} {:?}", def_id, subst);
             let base_sym = match util::item_type(self.tcx, def_id) {
                 ItemType::Impl => self.tcx.item_name(self.tcx.trait_id_of_impl(def_id).unwrap()),
+                ItemType::Closure => Symbol::intern(&format!("closure{}", self.tcx.def_path(def_id).data.last().unwrap().disambiguator)),
                 _ => self.tcx.item_name(def_id),
             };
 
@@ -481,8 +486,8 @@ fn cloneable_name(tcx: TyCtxt, def_id: DefId, interface: bool) -> QName {
         Interface | Program => {
             QName { module: Vec::new(), name: interface::interface_name(tcx, def_id) }
         }
-        Trait | Type | AssocTy => module_name(tcx, def_id).into(),
-        _ => unreachable!(),
+        Trait | Type | AssocTy | Closure => module_name(tcx, def_id).into(),
+        Unsupported(_) => unreachable!(),
     }
 }
 

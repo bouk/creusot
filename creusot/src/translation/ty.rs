@@ -2,8 +2,8 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::subst::SubstsRef;
 use rustc_middle::ty::{self, subst::InternalSubsts, ProjectionTy, Ty, TyCtxt, TyKind::*};
 use rustc_middle::ty::{FieldDef, VariantDef};
-use rustc_span::Span;
 use rustc_span::Symbol;
+use rustc_span::{Span, DUMMY_SP};
 use std::collections::VecDeque;
 use why3::declaration::TyDeclKind;
 use why3::declaration::{Axiom, Contract, Decl, Signature, ValKind};
@@ -120,6 +120,18 @@ fn translate_ty_inner<'tcx>(
             names.import_prelude_module(PreludeModule::Prelude);
             MlT::TConstructor(QName::from_string("opaque_ptr").unwrap())
         }
+        Closure(id, subst) => {
+            translate_closure_ty(ctx, *id, subst);
+            let cons = MlT::TConstructor(translate_ty_name(ctx, *id));
+            let args =
+                subst.types().map(|t| translate_ty_inner(trans, ctx, names, span, t)).collect();
+
+            MlT::TApp(box cons, args)
+        }
+        Foreign(_) => todo!(),
+        FnDef(_, _) => todo!(),
+        // FnPtr(_) => todo!(),
+        FnPtr(_) => MlT::Tuple(vec![]),
         _ => ctx.crash_and_error(span, &format!("unsupported type {:?}", ty)),
     }
 }
@@ -247,6 +259,23 @@ pub fn translate_tydecl(ctx: &mut TranslationCtx<'_, '_>, span: Span, did: DefId
 
     let ty_decl = TyDecl { ty_name, ty_params: ty_args, kind };
     ctx.add_type(did, ty_decl);
+}
+
+fn translate_closure_ty(ctx: &mut TranslationCtx<'_, 'tcx>, did: DefId, subst: SubstsRef<'tcx>) {
+    if !ctx.translated_items.insert(did) {
+        return;
+    }
+    let ty_name = translate_ty_name(ctx, did).name;
+
+    let mut names = &mut CloneMap::new(ctx.tcx, did, false);
+    let x: Vec<_> = subst
+        .as_closure()
+        .upvar_tys()
+        .map(|uv| translate_ty_inner(TyTranslation::Declaration, ctx, names, DUMMY_SP, uv))
+        .collect();
+
+    let kind = TyDeclKind::Adt(vec![(ty_name.clone(), x)]);
+    ctx.add_type(did, TyDecl { ty_name, ty_params: vec![], kind });
 }
 
 fn ty_param_names(tcx: TyCtxt<'tcx>, def_id: DefId) -> impl Iterator<Item = Ident> + 'tcx {
