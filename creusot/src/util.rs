@@ -2,7 +2,8 @@ use crate::ctx::*;
 use crate::translation::ty;
 use rustc_ast::{AttrItem, AttrKind, Attribute};
 use rustc_hir::{def::DefKind, def_id::DefId};
-use rustc_middle::ty::{Attributes, VariantDef};
+use rustc_middle::ty::subst::InternalSubsts;
+use rustc_middle::ty::{Attributes, VariantDef, TyKind};
 use rustc_middle::ty::{DefIdTree, TyCtxt};
 use rustc_span::Symbol;
 use why3::{declaration, QName};
@@ -233,9 +234,14 @@ pub fn signature_of<'tcx>(
     names: &mut CloneMap<'tcx>,
     def_id: DefId,
 ) -> Signature {
-    let sig = ctx
-        .tcx
-        .normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), ctx.tcx.fn_sig(def_id));
+    let gen_sig = match ctx.tcx.type_of(def_id).kind() {
+        TyKind::Closure(_, subst) => {
+            subst.as_closure().sig()
+        }
+        _ => ctx.tcx.fn_sig(def_id),
+    };
+
+    let sig = ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), gen_sig);
 
     let mut contract = names.with_public_clones(|names| {
         let pre_contract = crate::specification::contract_of(ctx, def_id).unwrap();

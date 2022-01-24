@@ -65,7 +65,8 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
                             body: box Exp::impure_var("a".into()),
                         }
                     }
-                    _ => unreachable!(),
+                    TyKind::Closure(_, _) => (),
+                    e => unreachable!("{:?}", e),
                 },
                 Downcast(_, _) => {}
                 _ => unimplemented!("unimplemented place projection"),

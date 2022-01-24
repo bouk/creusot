@@ -83,7 +83,7 @@ impl<'tcx, 'sess> TranslationCtx<'sess, 'tcx> {
             }
             ItemType::Type => unreachable!("ty"),
             ItemType::Interface => unreachable!(),
-            ItemType::Closure => (),
+            ItemType::Closure => self.translate_function(def_id),
             ItemType::Unsupported(dk) => self.crash_and_error(
                 self.tcx.def_span(def_id),
                 &format!("unsupported definition kind {:?} {:?}", def_id, dk),
