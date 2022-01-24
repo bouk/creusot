@@ -4,7 +4,7 @@ fn uses_closure() {
 }
 
 fn nested_closure() {
-  let a = true;
+    let a = true;
     let a = (|| {
         let omg = || a;
         (omg)()

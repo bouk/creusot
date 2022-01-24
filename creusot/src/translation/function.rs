@@ -1,13 +1,13 @@
 use crate::{
     gather_spec_closures::GatherSpecClosures,
     rustc_extensions::renumber,
+    translation::ty::translate_closure_ty,
     util::{self, ident_of, signature_of},
 };
 use rustc_borrowck::borrow_set::BorrowSet;
 use rustc_hir::def_id::DefId;
 use rustc_index::bit_set::BitSet;
 use rustc_infer::infer::TyCtxtInferExt;
-use rustc_middle::{mir::Place, ty::DefIdTree};
 use rustc_middle::ty::subst::GenericArg;
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::{GenericParamDef, GenericParamDefKind};
@@ -17,6 +17,7 @@ use rustc_middle::{
     ty::TyCtxt,
     ty::{TyKind, WithOptConstParam},
 };
+use rustc_middle::{mir::Place, ty::DefIdTree};
 use rustc_mir_dataflow::move_paths::MoveData;
 use rustc_span::Symbol;
 use std::collections::{BTreeMap, HashMap};
@@ -173,6 +174,12 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
     fn translate(mut self) -> Module {
         let mut decls: Vec<_> = Vec::new();
         decls.extend(closure_generic_decls(self.tcx, self.def_id));
+
+        if self.tcx.is_closure(self.def_id) {
+            if let TyKind::Closure(_, subst) = self.tcx.type_of(self.def_id).kind() {
+                decls.push(translate_closure_ty(self.ctx, self.def_id, subst))
+            }
+        }
 
         let sig = signature_of(self.ctx, &mut self.clone_names, self.def_id);
         let name = module_name(self.tcx, self.def_id);
@@ -462,11 +469,16 @@ fn resolve_trait_loaded(tcx: TyCtxt) -> bool {
 // Closures inherit the generic parameters of the original function they were defined in, but
 // add 3 'ghost' generics tracking metadata about the closure. We choose to erase those parameters,
 // as they contain a function type along with other irrelevant details (for us).
-pub(crate) fn closure_generic_decls(tcx: TyCtxt, mut def_id: DefId) -> impl Iterator<Item = Decl> + '_ {
+pub(crate) fn closure_generic_decls(
+    tcx: TyCtxt,
+    mut def_id: DefId,
+) -> impl Iterator<Item = Decl> + '_ {
     loop {
         if tcx.is_closure(def_id) {
             def_id = tcx.parent(def_id).unwrap();
-        } else { break; }
+        } else {
+            break;
+        }
     }
 
     all_generic_decls_for(tcx, def_id)

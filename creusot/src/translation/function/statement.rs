@@ -20,7 +20,7 @@ use super::FunctionTranslator;
 use crate::{
     clone_map::PreludeModule,
     translation::{binop_to_binop, unop_to_unop},
-    util::{self, constructor_qname},
+    util::{self, constructor_qname, item_qname},
 };
 
 impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
@@ -160,7 +160,9 @@ impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
                         } else if util::is_spec(self.tcx, *def_id) {
                             return;
                         } else {
-                            return;
+                            let cons = item_qname(self.tcx, *def_id);
+
+                            Constructor { ctor: cons, args: fields }
                             // self.ctx.crash_and_error(si.span, "closures are not yet supported")
                         }
                     }

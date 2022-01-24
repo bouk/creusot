@@ -1,7 +1,7 @@
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::subst::SubstsRef;
 use rustc_middle::ty::{self, subst::InternalSubsts, ProjectionTy, Ty, TyCtxt, TyKind::*};
-use rustc_middle::ty::{FieldDef, VariantDef, DefIdTree};
+use rustc_middle::ty::{DefIdTree, FieldDef, VariantDef};
 use rustc_span::Symbol;
 use rustc_span::{Span, DUMMY_SP};
 use std::collections::VecDeque;
@@ -120,8 +120,9 @@ fn translate_ty_inner<'tcx>(
             names.import_prelude_module(PreludeModule::Prelude);
             MlT::TConstructor(QName::from_string("opaque_ptr").unwrap())
         }
-        Closure(mut id, subst) => {
-            translate_closure_ty(ctx, id, subst);
+        Closure(mut id, _subst) => {
+            ctx.translate(id);
+
             let cons = MlT::TConstructor(translate_ty_name(ctx, id));
             loop {
                 if ctx.tcx.is_closure(id) {
@@ -269,10 +270,11 @@ pub fn translate_tydecl(ctx: &mut TranslationCtx<'_, '_>, span: Span, did: DefId
     ctx.add_type(did, ty_decl);
 }
 
-fn translate_closure_ty(ctx: &mut TranslationCtx<'_, 'tcx>, did: DefId, subst: SubstsRef<'tcx>) {
-    if !ctx.translated_items.insert(did) {
-        return;
-    }
+pub fn translate_closure_ty(
+    ctx: &mut TranslationCtx<'_, 'tcx>,
+    did: DefId,
+    subst: SubstsRef<'tcx>,
+) -> Decl {
     let ty_name = translate_ty_name(ctx, did).name;
 
     let names = &mut CloneMap::new(ctx.tcx, did, false);
@@ -283,7 +285,8 @@ fn translate_closure_ty(ctx: &mut TranslationCtx<'_, 'tcx>, did: DefId, subst: S
         .collect();
 
     let kind = TyDeclKind::Adt(vec![(ty_name.clone(), x)]);
-    ctx.add_type(did, TyDecl { ty_name, ty_params: vec![], kind });
+
+    Decl::TyDecl(TyDecl { ty_name, ty_params: vec![], kind })
 }
 
 fn ty_param_names(tcx: TyCtxt<'tcx>, def_id: DefId) -> impl Iterator<Item = Ident> + 'tcx {

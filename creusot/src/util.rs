@@ -3,7 +3,7 @@ use crate::translation::ty;
 use rustc_ast::{AttrItem, AttrKind, Attribute};
 use rustc_hir::{def::DefKind, def_id::DefId};
 use rustc_middle::ty::subst::InternalSubsts;
-use rustc_middle::ty::{Attributes, VariantDef, TyKind};
+use rustc_middle::ty::{Attributes, TyKind, VariantDef};
 use rustc_middle::ty::{DefIdTree, TyCtxt};
 use rustc_span::Symbol;
 use why3::{declaration, QName};
@@ -98,7 +98,11 @@ pub fn get_builtin(tcx: TyCtxt, def_id: DefId) -> Option<Symbol> {
 }
 
 pub fn constructor_qname(tcx: TyCtxt, var: &VariantDef) -> QName {
-    QName { module: vec![module_name(tcx, var.def_id)], name: item_name(tcx, var.def_id) }
+    item_qname(tcx, var.def_id)
+}
+
+pub fn item_qname(tcx: TyCtxt, def_id: DefId) -> QName {
+    QName { module: vec![module_name(tcx, def_id)], name: item_name(tcx, def_id) }
 }
 
 // This function will produce an invalid identifier for types.
@@ -235,9 +239,7 @@ pub fn signature_of<'tcx>(
     def_id: DefId,
 ) -> Signature {
     let gen_sig = match ctx.tcx.type_of(def_id).kind() {
-        TyKind::Closure(_, subst) => {
-            subst.as_closure().sig()
-        }
+        TyKind::Closure(_, subst) => subst.as_closure().sig(),
         _ => ctx.tcx.fn_sig(def_id),
     };
 
