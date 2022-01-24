@@ -1,7 +1,7 @@
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::subst::SubstsRef;
 use rustc_middle::ty::{self, subst::InternalSubsts, ProjectionTy, Ty, TyCtxt, TyKind::*};
-use rustc_middle::ty::{FieldDef, VariantDef};
+use rustc_middle::ty::{FieldDef, VariantDef, DefIdTree};
 use rustc_span::Symbol;
 use rustc_span::{Span, DUMMY_SP};
 use std::collections::VecDeque;
@@ -120,9 +120,17 @@ fn translate_ty_inner<'tcx>(
             names.import_prelude_module(PreludeModule::Prelude);
             MlT::TConstructor(QName::from_string("opaque_ptr").unwrap())
         }
-        Closure(id, subst) => {
-            translate_closure_ty(ctx, *id, subst);
-            let cons = MlT::TConstructor(translate_ty_name(ctx, *id));
+        Closure(mut id, subst) => {
+            translate_closure_ty(ctx, id, subst);
+            let cons = MlT::TConstructor(translate_ty_name(ctx, id));
+            loop {
+                if ctx.tcx.is_closure(id) {
+                    id = ctx.tcx.parent(id).unwrap();
+                } else {
+                    break;
+                }
+            }
+            let subst = InternalSubsts::identity_for_item(ctx.tcx, id);
             let args =
                 subst.types().map(|t| translate_ty_inner(trans, ctx, names, span, t)).collect();
 
@@ -267,7 +275,7 @@ fn translate_closure_ty(ctx: &mut TranslationCtx<'_, 'tcx>, did: DefId, subst: S
     }
     let ty_name = translate_ty_name(ctx, did).name;
 
-    let mut names = &mut CloneMap::new(ctx.tcx, did, false);
+    let names = &mut CloneMap::new(ctx.tcx, did, false);
     let x: Vec<_> = subst
         .as_closure()
         .upvar_tys()

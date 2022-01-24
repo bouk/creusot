@@ -7,7 +7,7 @@ use rustc_borrowck::borrow_set::BorrowSet;
 use rustc_hir::def_id::DefId;
 use rustc_index::bit_set::BitSet;
 use rustc_infer::infer::TyCtxtInferExt;
-use rustc_middle::mir::Place;
+use rustc_middle::{mir::Place, ty::DefIdTree};
 use rustc_middle::ty::subst::GenericArg;
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::{GenericParamDef, GenericParamDefKind};
@@ -172,7 +172,7 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
 
     fn translate(mut self) -> Module {
         let mut decls: Vec<_> = Vec::new();
-        decls.extend(all_generic_decls_for(self.tcx, self.def_id));
+        decls.extend(closure_generic_decls(self.tcx, self.def_id));
 
         let sig = signature_of(self.ctx, &mut self.clone_names, self.def_id);
         let name = module_name(self.tcx, self.def_id);
@@ -459,13 +459,25 @@ fn resolve_trait_loaded(tcx: TyCtxt) -> bool {
     tcx.get_diagnostic_item(Symbol::intern("creusot_resolve")).is_some()
 }
 
+// Closures inherit the generic parameters of the original function they were defined in, but
+// add 3 'ghost' generics tracking metadata about the closure. We choose to erase those parameters,
+// as they contain a function type along with other irrelevant details (for us).
+pub(crate) fn closure_generic_decls(tcx: TyCtxt, mut def_id: DefId) -> impl Iterator<Item = Decl> + '_ {
+    loop {
+        if tcx.is_closure(def_id) {
+            def_id = tcx.parent(def_id).unwrap();
+        } else { break; }
+    }
+
+    all_generic_decls_for(tcx, def_id)
+}
+
 pub fn all_generic_decls_for(tcx: TyCtxt, def_id: DefId) -> impl Iterator<Item = Decl> + '_ {
     let generics = tcx.generics_of(def_id);
 
     generic_decls((0..generics.count()).map(move |i| generics.param_at(i, tcx)))
 }
 
-#[allow(dead_code)]
 pub fn own_generic_decls_for(tcx: TyCtxt, def_id: DefId) -> impl Iterator<Item = Decl> + '_ {
     let generics = tcx.generics_of(def_id);
     generic_decls(generics.params.iter())

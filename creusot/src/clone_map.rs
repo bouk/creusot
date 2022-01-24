@@ -5,6 +5,7 @@ use indexmap::IndexMap;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::EdgeDirection::Incoming;
 use rustc_hir::def::DefKind;
+use rustc_middle::ty::DefIdTree;
 use why3::declaration::{CloneKind, CloneSubst, Decl, DeclClone, Use};
 use why3::{Ident, QName};
 
@@ -203,7 +204,10 @@ impl<'tcx> CloneMap<'tcx> {
             debug!("inserting {:?} {:?}", def_id, subst);
             let base_sym = match util::item_type(self.tcx, def_id) {
                 ItemType::Impl => self.tcx.item_name(self.tcx.trait_id_of_impl(def_id).unwrap()),
-                ItemType::Closure => Symbol::intern(&format!("closure{}", self.tcx.def_path(def_id).data.last().unwrap().disambiguator)),
+                ItemType::Closure => Symbol::intern(&format!(
+                    "closure{}",
+                    self.tcx.def_path(def_id).data.last().unwrap().disambiguator
+                )),
                 _ => self.tcx.item_name(def_id),
             };
 
@@ -445,12 +449,18 @@ impl<'tcx> CloneMap<'tcx> {
 pub fn base_subst<'tcx>(
     ctx: &mut TranslationCtx<'_, 'tcx>,
     names: &mut CloneMap<'tcx>,
-    def_id: DefId,
+    mut def_id: DefId,
     subst: SubstsRef<'tcx>,
 ) -> Vec<CloneSubst> {
     use heck::SnakeCase;
     use rustc_middle::ty::GenericParamDefKind;
-
+    loop {
+        if ctx.tcx.is_closure(def_id) {
+            def_id = ctx.tcx.parent(def_id).unwrap();
+        } else {
+            break;
+        }
+    }
     let trait_params = ctx.tcx.generics_of(def_id);
     let mut clone_subst = Vec::new();
 

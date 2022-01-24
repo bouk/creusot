@@ -10,6 +10,8 @@ use crate::{clone_map::CloneMap, ctx::*, translation::function::all_generic_decl
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 
+use super::function::closure_generic_decls;
+
 pub fn interface_for(
     ctx: &mut TranslationCtx<'_, 'tcx>,
     def_id: DefId,
@@ -19,7 +21,7 @@ pub fn interface_for(
     let mut sig = util::signature_of(ctx, &mut names, def_id);
     sig.contract.variant = Vec::new();
 
-    let mut decls: Vec<_> = all_generic_decls_for(ctx.tcx, def_id).collect();
+    let mut decls: Vec<_> = closure_generic_decls(ctx.tcx, def_id).collect();
 
     decls.extend(names.to_clones(ctx));
 
