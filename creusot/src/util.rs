@@ -114,7 +114,14 @@ pub fn item_name(tcx: TyCtxt, def_id: DefId) -> Ident {
 
     match tcx.def_kind(def_id) {
         AssocTy => ident_of_ty(tcx.item_name(def_id)),
-        Ctor(_, _) | Variant | Struct | Enum | Closure => ident_path(tcx, def_id),
+        Ctor(_, _) | Variant | Struct | Enum => ident_path(tcx, def_id),
+        Closure => {
+            let mut id = ident_path(tcx, def_id);
+            eprintln!("{:?}", id);
+            id.decapitalize();
+            eprintln!("{:?}", id);
+            id
+        }
 
         _ => ident_of(tcx.item_name(def_id)),
     }

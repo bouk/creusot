@@ -141,7 +141,6 @@ impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
                 let params = self.ctx.tcx.param_env(self.def_id);
                 let method = traits::resolve_assoc_item_opt(self.tcx, params, def_id, subst)
                     .expect("could not find instance");
-                eprintln!("{:?}", method);
 
                 self.ctx.translate(id);
                 self.ctx.translate(method.0);

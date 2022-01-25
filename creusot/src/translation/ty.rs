@@ -208,6 +208,7 @@ fn translate_ty_name(ctx: &mut TranslationCtx<'_, '_>, did: DefId) -> QName {
     if !ctx.translated_items.contains(&did) {
         translate_tydecl(ctx, rustc_span::DUMMY_SP, did);
     };
+
     let name = item_name(ctx.tcx, did).to_string().to_lowercase();
 
     QName { module: vec![module_name(ctx.tcx, did)], name: name.into() }
@@ -284,7 +285,9 @@ pub fn translate_closure_ty(
         .map(|uv| translate_ty_inner(TyTranslation::Declaration, ctx, names, DUMMY_SP, uv))
         .collect();
 
-    let kind = TyDeclKind::Adt(vec![(ty_name.clone(), x)]);
+    let mut cons_name = item_name(ctx.tcx, did);
+    cons_name.capitalize();
+    let kind = TyDeclKind::Adt(vec![(cons_name, x)]);
 
     Decl::TyDecl(TyDecl { ty_name, ty_params: vec![], kind })
 }
