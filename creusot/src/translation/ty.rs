@@ -120,10 +120,11 @@ fn translate_ty_inner<'tcx>(
             names.import_prelude_module(PreludeModule::Prelude);
             MlT::TConstructor(QName::from_string("opaque_ptr").unwrap())
         }
-        Closure(mut id, _subst) => {
+        Closure(mut id, subst) => {
             ctx.translate(id);
 
-            let cons = MlT::TConstructor(translate_ty_name(ctx, id));
+            let name = item_name(ctx.tcx, id).to_string().to_lowercase();
+            let cons = MlT::TConstructor(names.insert(id, subst).qname_ident(name.into()));
             loop {
                 if ctx.tcx.is_closure(id) {
                     id = ctx.tcx.parent(id).unwrap();

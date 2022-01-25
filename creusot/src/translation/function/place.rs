@@ -10,7 +10,10 @@ use why3::mlcfg::{Pattern::*, Statement::*};
 use why3::QName;
 
 use super::FunctionTranslator;
-use crate::{translation::ty::variant_accessor_name, util::{constructor_qname, item_qname}};
+use crate::{
+    translation::ty::variant_accessor_name,
+    util::{constructor_qname, item_qname},
+};
 
 impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
     pub fn translate_rplace(&mut self, rhs: &Place<'tcx>) -> Exp {
@@ -66,7 +69,11 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
                         }
                     }
                     TyKind::Closure(id, subst) => {
-                        eprintln!("{:?} {:?}", ix, subst.as_closure().upvar_tys().nth(ix.as_usize()).unwrap());
+                        eprintln!(
+                            "{:?} {:?}",
+                            ix,
+                            subst.as_closure().upvar_tys().nth(ix.as_usize()).unwrap()
+                        );
 
                         let mut pat = vec![Wildcard; subst.as_closure().upvar_tys().count()];
                         pat[ix.as_usize()] = VarP("a".into());
@@ -76,9 +83,9 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
                         inner = Let {
                             pattern: ConsP(cons, pat),
                             arg: box inner,
-                            body: box Exp::impure_var("a".into())
+                            body: box Exp::impure_var("a".into()),
                         }
-                    },
+                    }
                     e => unreachable!("{:?}", e),
                 },
                 Downcast(_, _) => {}

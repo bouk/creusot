@@ -20,7 +20,7 @@ use super::FunctionTranslator;
 use crate::{
     clone_map::PreludeModule,
     translation::{binop_to_binop, unop_to_unop},
-    util::{self, constructor_qname, item_qname},
+    util::{self, constructor_qname, item_name, item_qname},
 };
 
 impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
@@ -147,7 +147,7 @@ impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
 
                         Constructor { ctor: qname, args: fields }
                     }
-                    Closure(def_id, _) => {
+                    Closure(def_id, subst) => {
                         if util::is_invariant(self.tcx, *def_id) {
                             return;
                         } else if util::is_assertion(self.tcx, *def_id) {
@@ -160,7 +160,11 @@ impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
                         } else if util::is_spec(self.tcx, *def_id) {
                             return;
                         } else {
-                            let cons = item_qname(self.tcx, *def_id);
+                            let mut cons_name = item_name(self.tcx, *def_id);
+                            cons_name.capitalize();
+                            let cons =
+                                self.clone_names.insert(*def_id, subst).qname_ident(cons_name);
+                            // let cons = item_qname(self.tcx, *def_id);
 
                             Constructor { ctor: cons, args: fields }
                             // self.ctx.crash_and_error(si.span, "closures are not yet supported")

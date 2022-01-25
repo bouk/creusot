@@ -142,17 +142,17 @@ impl CloneInfo<'tcx> {
 
     // TODO: When traits stop holding all functions we can remove the last two arguments
     pub fn qname(&self, tcx: TyCtxt, def_id: DefId) -> QName {
-        self.qname_raw(match tcx.def_kind(def_id) {
+        self.qname_ident(match tcx.def_kind(def_id) {
             DefKind::Closure => Ident::build("closure"),
             _ => item_name(tcx, def_id),
         })
     }
 
     pub fn qname_sym(&self, sym: rustc_span::symbol::Symbol) -> QName {
-        self.qname_raw(sym.to_string().into())
+        self.qname_ident(sym.to_string().into())
     }
 
-    fn qname_raw(&self, method: Ident) -> QName {
+    pub fn qname_ident(&self, method: Ident) -> QName {
         let module = match &self.kind {
             Kind::Named(name) => vec![name.to_string().into()],
             _ => Vec::new(),
@@ -528,16 +528,16 @@ impl SymbolKind {
     fn to_subst(self, src: &CloneInfo, tgt: &CloneInfo) -> CloneSubst {
         let id = self.ident();
         match self {
-            SymbolKind::Val(_) => CloneSubst::Val(src.qname_raw(id.clone()), tgt.qname_raw(id)),
+            SymbolKind::Val(_) => CloneSubst::Val(src.qname_ident(id.clone()), tgt.qname_ident(id)),
             SymbolKind::Type(_) => CloneSubst::Type(
-                src.qname_raw(id.clone()),
-                why3::mlcfg::Type::TConstructor(tgt.qname_raw(id)),
+                src.qname_ident(id.clone()),
+                why3::mlcfg::Type::TConstructor(tgt.qname_ident(id)),
             ),
             SymbolKind::Function(_) => {
-                CloneSubst::Function(src.qname_raw(id.clone()), tgt.qname_raw(id))
+                CloneSubst::Function(src.qname_ident(id.clone()), tgt.qname_ident(id))
             }
             SymbolKind::Predicate(_) => {
-                CloneSubst::Predicate(src.qname_raw(id.clone()), tgt.qname_raw(id))
+                CloneSubst::Predicate(src.qname_ident(id.clone()), tgt.qname_ident(id))
             }
         }
     }
