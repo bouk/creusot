@@ -187,9 +187,9 @@ impl<'tcx> CloneMap<'tcx> {
             .collect()
     }
 
-    pub fn with_public_clones<F, A>(&mut self, mut f: F) -> A
+    pub fn with_public_clones<F, A>(&mut self, f: F) -> A
     where
-        F: FnMut(&mut Self) -> A,
+        F: FnOnce(&mut Self) -> A,
     {
         let public = std::mem::replace(&mut self.public, true);
         let ret = f(self);
@@ -222,7 +222,7 @@ impl<'tcx> CloneMap<'tcx> {
 
     pub fn clone_self(&mut self, self_id: DefId) {
         let subst = match self.tcx.type_of(self_id).kind() {
-            TyKind::Closure(id, csubst) => csubst,
+            TyKind::Closure(_, subst) => subst,
             _ => InternalSubsts::identity_for_item(self.tcx, self_id),
         };
 

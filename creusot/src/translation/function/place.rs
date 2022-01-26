@@ -69,12 +69,6 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
                         }
                     }
                     TyKind::Closure(id, subst) => {
-                        eprintln!(
-                            "{:?} {:?}",
-                            ix,
-                            subst.as_closure().upvar_tys().nth(ix.as_usize()).unwrap()
-                        );
-
                         let mut pat = vec![Wildcard; subst.as_closure().upvar_tys().count()];
                         pat[ix.as_usize()] = VarP("a".into());
                         let mut cons = item_qname(self.tcx, *id);

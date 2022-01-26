@@ -2,10 +2,10 @@ use crate::ctx::*;
 use crate::translation::ty;
 use rustc_ast::{AttrItem, AttrKind, Attribute};
 use rustc_hir::{def::DefKind, def_id::DefId};
-use rustc_middle::ty::subst::InternalSubsts;
 use rustc_middle::ty::{Attributes, TyKind, VariantDef};
-use rustc_middle::ty::{DefIdTree, TyCtxt};
+use rustc_middle::ty::{DefIdTree, ReErased, TyCtxt};
 use rustc_span::Symbol;
+use std::iter;
 use why3::{declaration, QName};
 use why3::{
     declaration::{Signature, ValKind},
@@ -117,9 +117,7 @@ pub fn item_name(tcx: TyCtxt, def_id: DefId) -> Ident {
         Ctor(_, _) | Variant | Struct | Enum => ident_path(tcx, def_id),
         Closure => {
             let mut id = ident_path(tcx, def_id);
-            eprintln!("{:?}", id);
             id.decapitalize();
-            eprintln!("{:?}", id);
             id
         }
 
@@ -245,41 +243,63 @@ pub fn signature_of<'tcx>(
     names: &mut CloneMap<'tcx>,
     def_id: DefId,
 ) -> Signature {
-    let gen_sig = match ctx.tcx.type_of(def_id).kind() {
-        TyKind::Closure(_, subst) => subst.as_closure().sig(),
-        _ => ctx.tcx.fn_sig(def_id),
-    };
+    let (inputs, output): (Box<dyn Iterator<Item = (rustc_span::symbol::Ident, _)>>, _) = match ctx
+        .tcx
+        .type_of(def_id)
+        .kind()
+    {
+        TyKind::FnDef(..) => {
+            let gen_sig = ctx.tcx.fn_sig(def_id);
+            let sig =
+                ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), gen_sig);
+            let iter =
+                ctx.tcx.fn_arg_names(def_id).iter().cloned().zip(sig.inputs().iter().cloned());
+            (box iter, sig.output())
+        }
+        TyKind::Closure(_, subst) => {
+            let sig = subst.as_closure().sig();
+            let sig = ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), sig);
+            let env_region = ReErased;
+            let env_ty = ctx.tcx.closure_env_ty(def_id, subst, env_region).unwrap();
 
-    let sig = ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), gen_sig);
+            let closure_env = (rustc_span::symbol::Ident::empty(), env_ty);
+            (
+                box iter::once(closure_env).chain(
+                    ctx.tcx.fn_arg_names(def_id).iter().cloned().zip(sig.inputs().iter().cloned()),
+                ),
+                sig.output(),
+            )
+        }
+        _ => unreachable!(),
+    };
 
     let mut contract = names.with_public_clones(|names| {
         let pre_contract = crate::specification::contract_of(ctx, def_id).unwrap();
         pre_contract.check_and_lower(ctx, names, def_id)
     });
 
-    if sig.output().is_never() {
+    if output.is_never() {
         contract.ensures.push(Exp::Const(Constant::const_false()));
     }
 
     let name = item_name(ctx.tcx, def_id);
 
     let span = ctx.tcx.def_span(def_id);
-    let args =
-        names.with_public_clones(|names| {
-            let arg_names = ctx.tcx.fn_arg_names(def_id);
-            arg_names
-                .iter()
-                .enumerate()
-                .map(|(ix, id)| {
-                    if id.name.is_empty() {
-                        format!("_{}", ix + 1).into()
-                    } else {
-                        ident_of(id.name)
-                    }
-                })
-                .zip(sig.inputs().iter().map(|ty| ty::translate_ty(ctx, names, span, ty)))
-                .collect()
-        });
+
+    let args = names.with_public_clones(|names| {
+        inputs
+            .enumerate()
+            .map(|(ix, (id, ty))| {
+                let ty = ty::translate_ty(ctx, names, span, ty);
+                let id = if id.name.is_empty() {
+                    format!("_{}", ix + 1).into()
+                } else {
+                    ident_of(id.name)
+                };
+                (id, ty)
+            })
+            .collect()
+    });
 
     Signature {
         // TODO: consider using the function's actual name instead of impl so that trait methods and normal functions have same structure
@@ -290,9 +310,7 @@ pub fn signature_of<'tcx>(
             vec![]
         },
         // TODO: use real span
-        retty: Some(
-            names.with_public_clones(|names| ty::translate_ty(ctx, names, span, sig.output())),
-        ),
+        retty: Some(names.with_public_clones(|names| ty::translate_ty(ctx, names, span, output))),
         args,
         contract,
     }

@@ -20,7 +20,7 @@ use super::FunctionTranslator;
 use crate::{
     clone_map::PreludeModule,
     translation::{binop_to_binop, unop_to_unop},
-    util::{self, constructor_qname, item_name, item_qname},
+    util::{self, constructor_qname, item_name},
 };
 
 impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
