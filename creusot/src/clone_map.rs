@@ -221,7 +221,11 @@ impl<'tcx> CloneMap<'tcx> {
     }
 
     pub fn clone_self(&mut self, self_id: DefId) {
-        let subst = InternalSubsts::identity_for_item(self.tcx, self_id);
+        let subst = match self.tcx.type_of(self_id).kind() {
+            TyKind::Closure(id, csubst) => csubst,
+            _ => InternalSubsts::identity_for_item(self.tcx, self_id),
+        };
+
         let subst = self.tcx.erase_regions(subst);
 
         debug!("cloning self: {:?}", (self_id, subst));
