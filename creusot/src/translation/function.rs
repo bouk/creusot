@@ -177,7 +177,7 @@ impl<'body, 'sess, 'tcx> FunctionTranslator<'body, 'sess, 'tcx> {
 
         if self.tcx.is_closure(self.def_id) {
             if let TyKind::Closure(_, subst) = self.tcx.type_of(self.def_id).kind() {
-                decls.push(translate_closure_ty(self.ctx, self.def_id, subst))
+                decls.push(Decl::TyDecl(translate_closure_ty(self.ctx, self.def_id, subst)))
             }
         }
 

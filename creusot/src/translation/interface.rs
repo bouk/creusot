@@ -1,16 +1,16 @@
 use std::borrow::Cow;
 
 use why3::{
-    declaration::{Contract, Decl, Module, ValKind},
+    declaration::{Contract, Decl, Module, TyDeclKind, ValKind},
     Ident,
 };
 
-use crate::{clone_map::CloneMap, ctx::*, translation::function::all_generic_decls_for, util};
+use crate::{clone_map::CloneMap, ctx::*, util};
 
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::TyCtxt;
+use rustc_middle::ty::{TyCtxt, TyKind};
 
-use super::function::closure_generic_decls;
+use super::{function::closure_generic_decls, ty::translate_closure_ty};
 
 pub fn interface_for(
     ctx: &mut TranslationCtx<'_, 'tcx>,
@@ -22,6 +22,14 @@ pub fn interface_for(
     sig.contract.variant = Vec::new();
 
     let mut decls: Vec<_> = closure_generic_decls(ctx.tcx, def_id).collect();
+
+    if ctx.tcx.is_closure(def_id) {
+        if let TyKind::Closure(_, subst) = ctx.tcx.type_of(def_id).kind() {
+            let mut tydecl = translate_closure_ty(ctx, def_id, subst);
+            tydecl.kind = TyDeclKind::Opaque;
+            decls.push(Decl::TyDecl(tydecl))
+        }
+    }
 
     decls.extend(names.to_clones(ctx));
 

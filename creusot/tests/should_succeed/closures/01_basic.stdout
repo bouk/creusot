@@ -15,6 +15,7 @@ module Type
   use prelude.Prelude
 end
 module C01Basic_UsesClosure_Closure0_Interface
+  type c01basic_usesclosure_closure0   
   use prelude.Prelude
   val c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) : bool
 end
@@ -102,7 +103,7 @@ module C01Basic_UsesClosure
     _3 <- _4;
     assume { (fun x -> true) _4 };
     _6 <- ();
-    x_2 <- Closure00.closure _3 _6;
+    x_2 <- Closure00.c01Basic_UsesClosure_Closure0 _3 _6;
     goto BB1
   }
   BB1 {
@@ -113,6 +114,7 @@ module C01Basic_UsesClosure
   
 end
 module C01Basic_NestedClosure_Closure0_Closure0_Interface
+  type c01basic_nestedclosure_closure0_closure0   
   use prelude.Prelude
   val c01Basic_NestedClosure_Closure0_Closure0 (_1 : c01basic_nestedclosure_closure0_closure0) : bool
 end
@@ -137,6 +139,7 @@ module C01Basic_NestedClosure_Closure0_Closure0
   
 end
 module C01Basic_NestedClosure_Closure0_Interface
+  type c01basic_nestedclosure_closure0   
   use prelude.Prelude
   val c01Basic_NestedClosure_Closure0 (_1 : c01basic_nestedclosure_closure0) : bool
 end
@@ -164,7 +167,7 @@ module C01Basic_NestedClosure_Closure0
     _4 <- omg_2;
     assume { (fun x -> true) omg_2 };
     _5 <- ();
-    _0 <- Closure00.closure _4 _5;
+    _0 <- Closure00.c01Basic_NestedClosure_Closure0_Closure0 _4 _5;
     goto BB1
   }
   BB1 {
@@ -197,7 +200,7 @@ module C01Basic_NestedClosure
     _3 <- _4;
     assume { (fun x -> true) _4 };
     _6 <- ();
-    a_2 <- Closure00.closure _3 _6;
+    a_2 <- Closure00.c01Basic_NestedClosure_Closure0 _3 _6;
     goto BB1
   }
   BB1 {

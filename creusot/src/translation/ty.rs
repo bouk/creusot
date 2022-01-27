@@ -276,7 +276,7 @@ pub fn translate_closure_ty(
     ctx: &mut TranslationCtx<'_, 'tcx>,
     did: DefId,
     subst: SubstsRef<'tcx>,
-) -> Decl {
+) -> TyDecl {
     let ty_name = translate_ty_name(ctx, did).name;
 
     let names = &mut CloneMap::new(ctx.tcx, did, false);
@@ -290,7 +290,7 @@ pub fn translate_closure_ty(
     cons_name.capitalize();
     let kind = TyDeclKind::Adt(vec![(cons_name, x)]);
 
-    Decl::TyDecl(TyDecl { ty_name, ty_params: vec![], kind })
+    TyDecl { ty_name, ty_params: vec![], kind }
 }
 
 fn ty_param_names(tcx: TyCtxt<'tcx>, def_id: DefId) -> impl Iterator<Item = Ident> + 'tcx {

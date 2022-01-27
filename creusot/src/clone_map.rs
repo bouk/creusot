@@ -143,7 +143,7 @@ impl CloneInfo<'tcx> {
     // TODO: When traits stop holding all functions we can remove the last two arguments
     pub fn qname(&self, tcx: TyCtxt, def_id: DefId) -> QName {
         self.qname_ident(match tcx.def_kind(def_id) {
-            DefKind::Closure => Ident::build("closure"),
+            // DefKind::Closure => Ident::build("closure"),
             _ => item_name(tcx, def_id),
         })
     }
