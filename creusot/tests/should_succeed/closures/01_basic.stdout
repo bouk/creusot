@@ -17,14 +17,14 @@ end
 module C01Basic_UsesClosure_Closure0_Interface
   type c01basic_usesclosure_closure0   
   use prelude.Prelude
-  val c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) : bool
+  val c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) (_2 : ()) : bool
 end
 module C01Basic_UsesClosure_Closure0
   type c01basic_usesclosure_closure0  = 
     | C01Basic_UsesClosure_Closure0 bool
     
   use prelude.Prelude
-  let rec cfg c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) : bool = 
+  let rec cfg c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) (_2 : ()) : bool = 
   var _0 : bool;
   var _1 : c01basic_usesclosure_closure0;
   {
@@ -116,14 +116,15 @@ end
 module C01Basic_NestedClosure_Closure0_Closure0_Interface
   type c01basic_nestedclosure_closure0_closure0   
   use prelude.Prelude
-  val c01Basic_NestedClosure_Closure0_Closure0 (_1 : c01basic_nestedclosure_closure0_closure0) : bool
+  val c01Basic_NestedClosure_Closure0_Closure0 (_1 : c01basic_nestedclosure_closure0_closure0) (_2 : ()) : bool
 end
 module C01Basic_NestedClosure_Closure0_Closure0
   type c01basic_nestedclosure_closure0_closure0  = 
     | C01Basic_NestedClosure_Closure0_Closure0 bool
     
   use prelude.Prelude
-  let rec cfg c01Basic_NestedClosure_Closure0_Closure0 (_1 : c01basic_nestedclosure_closure0_closure0) : bool = 
+  let rec cfg c01Basic_NestedClosure_Closure0_Closure0 (_1 : c01basic_nestedclosure_closure0_closure0) (_2 : ()) : bool
+   = 
   var _0 : bool;
   var _1 : c01basic_nestedclosure_closure0_closure0;
   {
@@ -141,7 +142,7 @@ end
 module C01Basic_NestedClosure_Closure0_Interface
   type c01basic_nestedclosure_closure0   
   use prelude.Prelude
-  val c01Basic_NestedClosure_Closure0 (_1 : c01basic_nestedclosure_closure0) : bool
+  val c01Basic_NestedClosure_Closure0 (_1 : c01basic_nestedclosure_closure0) (_2 : ()) : bool
 end
 module C01Basic_NestedClosure_Closure0
   type c01basic_nestedclosure_closure0  = 
@@ -149,7 +150,7 @@ module C01Basic_NestedClosure_Closure0
     
   use prelude.Prelude
   clone C01Basic_NestedClosure_Closure0_Closure0 as Closure00
-  let rec cfg c01Basic_NestedClosure_Closure0 (_1 : c01basic_nestedclosure_closure0) : bool = 
+  let rec cfg c01Basic_NestedClosure_Closure0 (_1 : c01basic_nestedclosure_closure0) (_2 : ()) : bool = 
   var _0 : bool;
   var _1 : c01basic_nestedclosure_closure0;
   var omg_2 : Closure00.c01basic_nestedclosure_closure0_closure0;

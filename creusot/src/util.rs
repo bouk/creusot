@@ -243,35 +243,39 @@ pub fn signature_of<'tcx>(
     names: &mut CloneMap<'tcx>,
     def_id: DefId,
 ) -> Signature {
-    let (inputs, output): (Box<dyn Iterator<Item = (rustc_span::symbol::Ident, _)>>, _) = match ctx
-        .tcx
-        .type_of(def_id)
-        .kind()
-    {
-        TyKind::FnDef(..) => {
-            let gen_sig = ctx.tcx.fn_sig(def_id);
-            let sig =
-                ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), gen_sig);
-            let iter =
-                ctx.tcx.fn_arg_names(def_id).iter().cloned().zip(sig.inputs().iter().cloned());
-            (box iter, sig.output())
-        }
-        TyKind::Closure(_, subst) => {
-            let sig = subst.as_closure().sig();
-            let sig = ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), sig);
-            let env_region = ReErased;
-            let env_ty = ctx.tcx.closure_env_ty(def_id, subst, env_region).unwrap();
+    let (inputs, output): (Box<dyn Iterator<Item = (rustc_span::symbol::Ident, _)>>, _) =
+        match ctx.tcx.type_of(def_id).kind() {
+            TyKind::FnDef(..) => {
+                let gen_sig = ctx.tcx.fn_sig(def_id);
+                let sig = ctx
+                    .tcx
+                    .normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), gen_sig);
+                let iter =
+                    ctx.tcx.fn_arg_names(def_id).iter().cloned().zip(sig.inputs().iter().cloned());
+                (box iter, sig.output())
+            }
+            TyKind::Closure(_, subst) => {
+                let sig = subst.as_closure().sig();
+                let sig =
+                    ctx.tcx.normalize_erasing_late_bound_regions(ctx.tcx.param_env(def_id), sig);
+                let env_region = ReErased;
+                let env_ty = ctx.tcx.closure_env_ty(def_id, subst, env_region).unwrap();
 
-            let closure_env = (rustc_span::symbol::Ident::empty(), env_ty);
-            (
-                box iter::once(closure_env).chain(
-                    ctx.tcx.fn_arg_names(def_id).iter().cloned().zip(sig.inputs().iter().cloned()),
-                ),
-                sig.output(),
-            )
-        }
-        _ => unreachable!(),
-    };
+                eprintln!("{:?} {:?}", ctx.tcx.fn_arg_names(def_id), sig.inputs());
+                let closure_env = (rustc_span::symbol::Ident::empty(), env_ty);
+                let names = ctx
+                    .tcx
+                    .fn_arg_names(def_id)
+                    .iter()
+                    .cloned()
+                    .chain(iter::repeat(rustc_span::symbol::Ident::empty()));
+                (
+                    box iter::once(closure_env).chain(names.zip(sig.inputs().iter().cloned())),
+                    sig.output(),
+                )
+            }
+            _ => unreachable!(),
+        };
 
     let mut contract = names.with_public_clones(|names| {
         let pre_contract = crate::specification::contract_of(ctx, def_id).unwrap();
