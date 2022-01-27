@@ -7,8 +7,6 @@ fn uses_closure() {
 //   (|| { x })()
 // }
 
-
-
 // fn call_closure() {
 //   closure_param(|x : u32| { () })
 // }

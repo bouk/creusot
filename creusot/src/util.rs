@@ -261,7 +261,6 @@ pub fn signature_of<'tcx>(
                 let env_region = ReErased;
                 let env_ty = ctx.tcx.closure_env_ty(def_id, subst, env_region).unwrap();
 
-                eprintln!("{:?} {:?}", ctx.tcx.fn_arg_names(def_id), sig.inputs());
                 let closure_env = (rustc_span::symbol::Ident::empty(), env_ty);
                 let names = ctx
                     .tcx

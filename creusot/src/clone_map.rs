@@ -5,7 +5,7 @@ use indexmap::IndexMap;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::EdgeDirection::Incoming;
 use rustc_hir::def::DefKind;
-use rustc_middle::ty::DefIdTree;
+use rustc_middle::ty::{DefIdTree, TyS};
 use why3::declaration::{CloneKind, CloneSubst, Decl, DeclClone, Use};
 use why3::{Ident, QName};
 
@@ -17,7 +17,7 @@ use rustc_middle::ty::{
     subst::{InternalSubsts, Subst, SubstsRef},
     ProjectionTy, Ty, TyCtxt, TyKind,
 };
-use rustc_span::Symbol;
+use rustc_span::{Symbol, DUMMY_SP};
 
 use crate::ctx::{self, *};
 use crate::translation::{interface, traits};
@@ -86,12 +86,18 @@ pub struct CloneMap<'tcx> {
     // DefId of the item which is cloning. Used for trait resolution
     self_id: DefId,
     // Graph which is used to calculate the full clone set
-    clone_graph: DiGraphMap<CloneNode<'tcx>, Option<(DefId, SubstsRef<'tcx>)>>,
+    clone_graph: DiGraphMap<DepNode<'tcx>, Option<CloneNode<'tcx>>>,
     // Index of the last cloned entry
     last_cloned: usize,
 
     // Internal state to determine whether clones should be public or not
     public: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum DepNode<'tcx> {
+    Type(Ty<'tcx>),
+    Dep(CloneNode<'tcx>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, TyEncodable, TyDecodable)]
@@ -278,7 +284,7 @@ impl<'tcx> CloneMap<'tcx> {
                 continue;
             }
 
-            self.clone_graph.add_node(key);
+            self.clone_graph.add_node(DepNode::Dep(key));
             ctx.translate(key.0);
 
             debug!("{:?} has {:?} dependencies", key, ctx.dependencies(key.0).map(|d| d.len()));
@@ -307,7 +313,32 @@ impl<'tcx> CloneMap<'tcx> {
             let param_env = ctx.tcx.param_env(self.self_id);
             let resolved = traits::resolve_opt(ctx.tcx, param_env, dep.0, dep.1).unwrap_or(dep);
 
-            eprintln!("{:?}", self.tcx.param_env_reveal_all_normalized(self.self_id));
+            if util::item_type(self.tcx, resolved.0) == ItemType::AssocTy
+                && self.tcx.trait_of_item(resolved.0).is_some()
+            {
+                eprintln!("OMGOMGOMG {:?} {:?}", dep, resolved);
+                let ty = self
+                    .tcx
+                    .mk_ty(TyKind::Projection(ProjectionTy { item_def_id: dep.0, substs: dep.1 }));
+
+                let normed = self.tcx.try_normalize_erasing_regions(param_env, ty);
+                eprintln!("{:?}", normed);
+                match normed {
+                    Ok(normed) => {
+                        if !TyS::same_type(ty, normed) {
+                            self.clone_graph.add_edge(
+                                DepNode::Type(normed),
+                                DepNode::Dep(key),
+                                Some(*orig),
+                            );
+                            trace!("{:?} -> {:?}", ty, key);
+
+                            continue;
+                        }
+                    }
+                    Err(_) => {}
+                }
+            };
 
             self.insert(resolved.0, resolved.1);
 
@@ -317,7 +348,7 @@ impl<'tcx> CloneMap<'tcx> {
             }
 
             trace!("{:?} -> {:?}", resolved, key);
-            self.clone_graph.add_edge(resolved, key, Some(*orig));
+            self.clone_graph.add_edge(DepNode::Dep(resolved), DepNode::Dep(key), Some(*orig));
         }
     }
 
@@ -327,7 +358,7 @@ impl<'tcx> CloneMap<'tcx> {
             self.insert(dep.0, dep.1);
 
             trace!("{:?} -> {:?}", dep, key);
-            self.clone_graph.add_edge(*dep, key, None);
+            self.clone_graph.add_edge(DepNode::Dep(*dep), DepNode::Dep(key), None);
         }
     }
 
@@ -382,13 +413,16 @@ impl<'tcx> CloneMap<'tcx> {
         // TODO: Ensure that if there is a cycle we emit a nice error.
 
         let mut topo = Topo::new(&self.clone_graph);
-        while let Some(node @ (def_id, subst)) = topo.walk_next(&self.clone_graph) {
+
+        while let Some(node) = topo.walk_next(&self.clone_graph) {
             debug!("processing node={:?}", node);
+
+            let DepNode::Dep(node @ (def_id, subst)) = node else { continue };
 
             // Though we pass in a &mut ref, it shouldn't actually be possible to add any new entries..
             let mut clone_subst = base_subst(ctx, self, def_id, subst);
 
-            if self.names.get(&node).unwrap_or_else(|| panic!("{:?}", node)).cloned {
+            if self.names[&node].cloned {
                 continue;
             }
             self.names[&node].cloned = true;
@@ -397,22 +431,30 @@ impl<'tcx> CloneMap<'tcx> {
                 continue;
             }
 
-            let node_clones = ctx.dependencies(def_id).unwrap_or(&empty);
-            for (dep, t, &orig_subst) in self.clone_graph.edges_directed(node, Incoming) {
-                trace!("s={:?} t={:?} e={:?}", dep, t, orig_subst);
-
-                let recv_info = match orig_subst {
-                    Some(recv_id) => &node_clones[&recv_id],
-                    None => continue,
-                };
+            let inbound_nodes: Vec<_> =
+                self.clone_graph.neighbors_directed(DepNode::Dep(node), Incoming).collect();
+            for dep in inbound_nodes {
+                let Some(orig_subst) = self.clone_graph[(dep, DepNode::Dep(node))] else { continue };
+                trace!("s={:?} t={:?} e={:?}", dep, node, orig_subst);
 
                 // Grab the symbols from all dependencies
-                let caller_info = &self.names[&dep];
-                for sym in refinable_symbols(ctx.tcx, orig_subst.unwrap_or(dep).0) {
-                    let elem = sym.to_subst(recv_info, caller_info);
-                    // If we are in an interface, then we should not attempt to share
-                    // dependencies at all.
-                    clone_subst.push(elem);
+                for sym in refinable_symbols(ctx.tcx, orig_subst.0) {
+                    match dep {
+                        DepNode::Type(ty) => {
+                            let ty = super::ty::translate_ty(ctx, self, DUMMY_SP, ty);
+                            let Some(recv_info) = ctx.dependencies(def_id).and_then(|dep| dep.get(&orig_subst)) else { continue };
+
+                            clone_subst
+                                .push(CloneSubst::Type(recv_info.qname_ident(sym.ident()), ty))
+                        }
+                        DepNode::Dep(dep) => {
+                            let Some(recv_info) = ctx.dependencies(def_id).and_then(|dep| dep.get(&orig_subst)) else { continue };
+
+                            let caller_info = &self.names[&dep];
+                            let elem = sym.to_subst(recv_info, caller_info);
+                            clone_subst.push(elem);
+                        }
+                    }
                 }
             }
 
