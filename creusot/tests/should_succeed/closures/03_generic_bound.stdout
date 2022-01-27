@@ -14,31 +14,6 @@ module Type
   use floating_point.Double
   use prelude.Prelude
 end
-module C01Basic_UsesClosure_Closure0_Interface
-  type c01basic_usesclosure_closure0   
-  use prelude.Prelude
-  val c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) (_2 : ()) : bool
-end
-module C01Basic_UsesClosure_Closure0
-  type c01basic_usesclosure_closure0  = 
-    | C01Basic_UsesClosure_Closure0 bool
-    
-  use prelude.Prelude
-  let rec cfg c01Basic_UsesClosure_Closure0 (_1 : c01basic_usesclosure_closure0) (_2 : ()) : bool = 
-  var _0 : bool;
-  var _1 : c01basic_usesclosure_closure0;
-  {
-    _1 <- _1;
-    goto BB0
-  }
-  BB0 {
-    assume { (fun x -> true) _0 };
-    _0 <- (let C01Basic_UsesClosure_Closure0 a = _1 in a);
-    assume { (fun x -> true) _1 };
-    return _0
-  }
-  
-end
 module Core_Ops_Function_FnOnce_Output
   type self   
   type args   
@@ -78,37 +53,38 @@ module Core_Ops_Function_Fn_Call
     requires {false}
     
 end
-module C01Basic_UsesClosure_Interface
-  val uses_closure [@cfg:stackify] () : ()
+module C03GenericBound_ClosureParam_Interface
+  type f   
+  val closure_param [@cfg:stackify] (f : f) : ()
 end
-module C01Basic_UsesClosure
+module C03GenericBound_ClosureParam
+  type f   
+  use mach.int.Int
+  use mach.int.UInt32
   use prelude.Prelude
-  clone C01Basic_UsesClosure_Closure0 as Closure00
-  let rec cfg uses_closure [@cfg:stackify] () : () = 
+  clone Core_Ops_Function_FnOnce_Output as Output0 with type self = f, type args = (uint32)
+  clone Core_Ops_Function_Fn_Call_Interface as Call0 with type self = f, type args = (uint32),
+  type Output0.output = Output0.output
+  let rec cfg closure_param [@cfg:stackify] (f : f) : () = 
   var _0 : ();
-  var y_1 : bool;
-  var x_2 : bool;
-  var _3 : Closure00.c01basic_usesclosure_closure0;
-  var _4 : Closure00.c01basic_usesclosure_closure0;
-  var _5 : bool;
-  var _6 : ();
+  var f_1 : f;
+  var _2 : f;
+  var _3 : (uint32);
   {
+    f_1 <- f;
     goto BB0
   }
   BB0 {
-    y_1 <- true;
-    _5 <- y_1;
-    assume { (fun x -> true) y_1 };
-    _4 <- Closure00.C01Basic_UsesClosure_Closure0 _5;
-    _3 <- _4;
-    assume { (fun x -> true) _4 };
-    _6 <- ();
-    x_2 <- Closure00.c01Basic_UsesClosure_Closure0 _3 _6;
+    _2 <- f_1;
+    _3 <- ((0 : uint32));
+    _0 <- Call0.call _2 _3;
     goto BB1
   }
   BB1 {
-    assume { (fun x -> true) x_2 };
-    _0 <- ();
+    goto BB2
+  }
+  BB2 {
+    assume { (fun x -> true) f_1 };
     return _0
   }
   

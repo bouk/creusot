@@ -305,17 +305,19 @@ impl<'tcx> CloneMap<'tcx> {
             let dep = (dep.0, dep.1.subst(self.tcx, key.1));
 
             let param_env = ctx.tcx.param_env(self.self_id);
-            let dep = traits::resolve_opt(ctx.tcx, param_env, dep.0, dep.1).unwrap_or(dep);
+            let resolved = traits::resolve_opt(ctx.tcx, param_env, dep.0, dep.1).unwrap_or(dep);
 
-            self.insert(dep.0, dep.1);
+            eprintln!("{:?}", self.tcx.param_env_reveal_all_normalized(self.self_id));
+
+            self.insert(resolved.0, resolved.1);
 
             // Skip reflexive edges
-            if dep == key {
+            if resolved == key {
                 continue;
             }
 
-            trace!("{:?} -> {:?}", dep, key);
-            self.clone_graph.add_edge(dep, key, Some(*orig));
+            trace!("{:?} -> {:?}", resolved, key);
+            self.clone_graph.add_edge(resolved, key, Some(*orig));
         }
     }
 

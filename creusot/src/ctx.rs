@@ -66,10 +66,11 @@ impl<'tcx, 'sess> TranslationCtx<'sess, 'tcx> {
     }
 
     pub fn translate(&mut self, def_id: DefId) {
-        debug!("translating {:?}", def_id);
         if self.translated_items.contains(&def_id) {
             return;
         }
+        debug!("translating {:?}", def_id);
+
         match item_type(self.tcx, def_id) {
             ItemType::Trait => self.translate_trait(def_id),
             ItemType::Impl => self.translate_impl(def_id),
