@@ -2,6 +2,7 @@ use crate::ctx::*;
 use crate::translation::ty;
 use rustc_ast::{AttrItem, AttrKind, Attribute};
 use rustc_hir::{def::DefKind, def_id::DefId};
+use rustc_middle::ty::subst::InternalSubsts;
 use rustc_middle::ty::{Attributes, TyKind, VariantDef};
 use rustc_middle::ty::{DefIdTree, ReErased, TyCtxt};
 use rustc_span::Symbol;
@@ -277,6 +278,23 @@ pub fn signature_of<'tcx>(
         };
 
     let mut contract = names.with_public_clones(|names| {
+        for pred in ctx.tcx.predicates_of(def_id).instantiate_identity(ctx.tcx).predicates {
+            use rustc_middle::ty::PredicateKind::*;
+            match pred.kind().skip_binder() {
+                Trait(tp) => {
+                    for assoc_item in ctx.tcx.associated_items(tp.def_id()).in_definition_order() {
+                        let assoc_subst =
+                            InternalSubsts::identity_for_item(ctx.tcx, assoc_item.def_id)
+                                .rebase_onto(ctx.tcx, tp.def_id(), tp.trait_ref.substs);
+
+                        names.insert(assoc_item.def_id, assoc_subst);
+                    }
+                    // names.insert(tp.trait_ref.def_id, tp.trait_ref.substs);
+                }
+                Projection(_) => {}
+                _ => {}
+            }
+        }
         let pre_contract = crate::specification::contract_of(ctx, def_id).unwrap();
         pre_contract.check_and_lower(ctx, names, def_id)
     });

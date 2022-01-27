@@ -316,13 +316,11 @@ impl<'tcx> CloneMap<'tcx> {
             if util::item_type(self.tcx, resolved.0) == ItemType::AssocTy
                 && self.tcx.trait_of_item(resolved.0).is_some()
             {
-                eprintln!("OMGOMGOMG {:?} {:?}", dep, resolved);
                 let ty = self
                     .tcx
                     .mk_ty(TyKind::Projection(ProjectionTy { item_def_id: dep.0, substs: dep.1 }));
 
                 let normed = self.tcx.try_normalize_erasing_regions(param_env, ty);
-                eprintln!("{:?}", normed);
                 match normed {
                     Ok(normed) => {
                         if !TyS::same_type(ty, normed) {

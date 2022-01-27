@@ -30,16 +30,44 @@ end
 module Core_Ops_Function_FnOnce_CallOnce
   type self   
   type args   
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = self, type args = args
   clone Core_Ops_Function_FnOnce_Output as Output0 with type self = self, type args = args
   val call_once [@cfg:stackify] (self : self) (args : args) : Output0.output
     requires {false}
     
+end
+module Core_Ops_Function_FnMut_CallMut_Interface
+  type self
+  type args
+  use prelude.Prelude
+  clone Core_Ops_Function_FnOnce_Output as Output0 with type self = self, type args = args
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = self, type args = args,
+  type Output0.output = Output0.output
+  val call_mut [@cfg:stackify] (self : borrowed self) (args : args) : Output0.output
+    requires {false}
+
+end
+module Core_Ops_Function_FnMut_CallMut
+  type self
+  type args
+  use prelude.Prelude
+  clone Core_Ops_Function_FnMut_CallMut_Interface as CallMut0 with type self = self, type args = args
+  clone Core_Ops_Function_FnOnce_Output as Output0 with type self = self, type args = args
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = self, type args = args,
+  type Output0.output = Output0.output
+  val call_mut [@cfg:stackify] (self : borrowed self) (args : args) : Output0.output
+    requires {false}
+
 end
 module Core_Ops_Function_Fn_Call_Interface
   type self   
   type args   
   use prelude.Prelude
   clone Core_Ops_Function_FnOnce_Output as Output0 with type self = self, type args = args
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = self, type args = args,
+  type Output0.output = Output0.output
+  clone Core_Ops_Function_FnMut_CallMut_Interface as CallMut0 with type self = self, type args = args,
+  type Output0.output = Output0.output, val CallOnce0.call_once = CallOnce0.call_once
   val call [@cfg:stackify] (self : self) (args : args) : Output0.output
     requires {false}
     
@@ -48,23 +76,39 @@ module Core_Ops_Function_Fn_Call
   type self   
   type args   
   use prelude.Prelude
+  clone Core_Ops_Function_Fn_Call_Interface as Call0 with type self = self, type args = args
   clone Core_Ops_Function_FnOnce_Output as Output0 with type self = self, type args = args
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = self, type args = args,
+  type Output0.output = Output0.output
+  clone Core_Ops_Function_FnMut_CallMut_Interface as CallMut0 with type self = self, type args = args,
+  type Output0.output = Output0.output, val CallOnce0.call_once = CallOnce0.call_once
   val call [@cfg:stackify] (self : self) (args : args) : Output0.output
     requires {false}
     
 end
 module C03GenericBound_ClosureParam_Interface
   type f   
+  use mach.int.Int
+  use mach.int.UInt32
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = f, type args = (uint32),
+  type Output0.output = ()
+  clone Core_Ops_Function_FnMut_CallMut_Interface as CallMut0 with type self = f, type args = (uint32),
+  type Output0.output = (), val CallOnce0.call_once = CallOnce0.call_once
+  clone Core_Ops_Function_Fn_Call_Interface as Call0 with type self = f, type args = (uint32),
+  val CallMut0.call_mut = CallMut0.call_mut, type Output0.output = ()
   val closure_param [@cfg:stackify] (f : f) : ()
 end
 module C03GenericBound_ClosureParam
   type f   
   use mach.int.Int
   use mach.int.UInt32
-  use prelude.Prelude
-  clone Core_Ops_Function_FnOnce_Output as Output0 with type self = f, type args = (uint32)
+  clone Core_Ops_Function_FnOnce_CallOnce_Interface as CallOnce0 with type self = f, type args = (uint32),
+  type Output0.output = ()
+  clone Core_Ops_Function_FnMut_CallMut_Interface as CallMut0 with type self = f, type args = (uint32),
+  type Output0.output = (), val CallOnce0.call_once = CallOnce0.call_once
   clone Core_Ops_Function_Fn_Call_Interface as Call0 with type self = f, type args = (uint32),
-  type Output0.output = Output0.output
+  val CallMut0.call_mut = CallMut0.call_mut, type Output0.output = (), val CallOnce0.call_once = CallOnce0.call_once
+  use prelude.Prelude
   let rec cfg closure_param [@cfg:stackify] (f : f) : () = 
   var _0 : ();
   var f_1 : f;
@@ -88,4 +132,58 @@ module C03GenericBound_ClosureParam
     return _0
   }
   
+end
+module C03GenericBound_Caller_Closure0_Interface
+  type c03genericbound_caller_closure0
+  use prelude.Prelude
+  use mach.int.Int
+  use mach.int.UInt32
+  val call_once (_1 : c03genericbound_caller_closure0) (x : (uint32)) : ()
+end
+module C03GenericBound_Caller_Closure0
+  type c03genericbound_caller_closure0  =
+    | C03GenericBound_Caller_Closure0
+
+  use prelude.Prelude
+  use mach.int.Int
+  use mach.int.UInt32
+  let rec cfg call_once (_1 : c03genericbound_caller_closure0) (x : (uint32)) : () =
+  var _0 : ();
+  var _1 : c03genericbound_caller_closure0;
+  var x_2 : uint32;
+  {
+    _1 <- _1;
+    x_2 <- x;
+    goto BB0
+  }
+  BB0 {
+    _0 <- ();
+    assume { (fun x -> true) _1 };
+    assume { (fun x -> true) x_2 };
+    return _0
+  }
+
+end
+module C03GenericBound_Caller_Interface
+  val caller [@cfg:stackify] () : ()
+end
+module C03GenericBound_Caller
+  clone C03GenericBound_Caller_Closure0 as Closure00
+  clone C03GenericBound_ClosureParam_Interface as ClosureParam0 with type f = Closure00.c03genericbound_caller_closure0,
+  val CallOnce0.call_once = Closure00.call_once
+  let rec cfg caller [@cfg:stackify] () : () =
+  var _0 : ();
+  var _1 : Closure00.c03genericbound_caller_closure0;
+  {
+    goto BB0
+  }
+  BB0 {
+    _1 <- Closure00.C03GenericBound_Caller_Closure0;
+    _0 <- ClosureParam0.closure_param _1;
+    goto BB1
+  }
+  BB1 {
+    return _0
+  }
+
 end
