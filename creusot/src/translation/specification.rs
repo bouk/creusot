@@ -43,7 +43,7 @@ pub fn ensures_to_why<'tcx>(
     ens_id: DefId,
 ) -> Exp {
     log::debug!("ensures clause {:?}", ens_id);
-    let term = ctx.term(ens_id).unwrap().clone();
+    let term = ctx.term(ens_id).unwrap_or_else(|| panic!("no term for ensures clause {:?}", ens_id)).clone();
     lower_pure(ctx, names, ens_id, term)
 }
 

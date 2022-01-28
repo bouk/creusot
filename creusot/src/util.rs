@@ -278,23 +278,27 @@ pub fn signature_of<'tcx>(
         };
 
     let mut contract = names.with_public_clones(|names| {
-        for pred in ctx.tcx.predicates_of(def_id).instantiate_identity(ctx.tcx).predicates {
-            use rustc_middle::ty::PredicateKind::*;
-            match pred.kind().skip_binder() {
-                Trait(tp) => {
-                    for assoc_item in ctx.tcx.associated_items(tp.def_id()).in_definition_order() {
-                        let assoc_subst =
-                            InternalSubsts::identity_for_item(ctx.tcx, assoc_item.def_id)
-                                .rebase_onto(ctx.tcx, tp.def_id(), tp.trait_ref.substs);
+        // for pred in ctx.tcx.predicates_of(def_id).instantiate_identity(ctx.tcx).predicates {
+        //     use rustc_middle::ty::PredicateKind::*;
+        //     match pred.kind().skip_binder() {
+        //         Trait(tp) => {
+        //             for assoc_item in ctx.tcx.associated_items(tp.def_id()).in_definition_order() {
+        //                 if !should_translate(ctx.tcx, assoc_item.def_id) {
+        //                     continue
+        //                 }
 
-                        names.insert(assoc_item.def_id, assoc_subst);
-                    }
-                    // names.insert(tp.trait_ref.def_id, tp.trait_ref.substs);
-                }
-                Projection(_) => {}
-                _ => {}
-            }
-        }
+        //                 let assoc_subst =
+        //                     InternalSubsts::identity_for_item(ctx.tcx, assoc_item.def_id)
+        //                         .rebase_onto(ctx.tcx, tp.def_id(), tp.trait_ref.substs);
+
+        //                 names.insert(assoc_item.def_id, assoc_subst);
+        //             }
+        //             // names.insert(tp.trait_ref.def_id, tp.trait_ref.substs);
+        //         }
+        //         Projection(_) => {}
+        //         _ => {}
+        //     }
+        // }
         let pre_contract = crate::specification::contract_of(ctx, def_id).unwrap();
         pre_contract.check_and_lower(ctx, names, def_id)
     });
