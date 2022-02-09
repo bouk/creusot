@@ -33,7 +33,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    should_fail("tests/should_fail/*.rs", |p| run_creusot(p, &temp_file.to_string_lossy()));
+    should_fail("tests/should_fail/**/*.rs", |p| run_creusot(p, &temp_file.to_string_lossy()));
     should_succeed("tests/should_succeed/**/*.rs", |p| {
         run_creusot(p, &temp_file.to_string_lossy())
     });
@@ -66,6 +66,7 @@ fn run_creusot(file: &Path, contracts: &str) -> std::process::Command {
 
     cmd.arg(format!("-Ldependency={}/", dep_path.display()));
     cmd.arg(format!("{}", file.display()));
+    cmd.arg("--crate-type=lib");
     cmd
 }
 

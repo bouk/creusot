@@ -7,20 +7,20 @@ pub mod specification;
 pub mod traits;
 pub mod ty;
 
-pub use function::translate_function;
-pub use function::LocalIdent;
-pub use logic::*;
-
 use crate::ctx;
 use crate::ctx::TypeDeclaration;
+use crate::error::CrErr;
 use crate::metadata;
 use crate::options::Options;
 use crate::translation::external::extract_extern_specs_from_item;
 use crate::validate::validate_traits;
+pub use function::translate_function;
+pub use function::LocalIdent;
 use heck::CamelCase;
+pub use logic::*;
 use rustc_hir::def_id::LOCAL_CRATE;
 use rustc_middle::ty::TyCtxt;
-use std::io::Result;
+use std::error::Error;
 use std::io::Write;
 use why3::mlcfg;
 use why3::{
@@ -29,13 +29,20 @@ use why3::{
 };
 
 // TODO: Move the main loop out of `translation.rs`
-pub fn translate(tcx: TyCtxt, opts: &Options) -> Result<()> {
+pub fn translate(tcx: TyCtxt, opts: &Options) -> Result<(), Box<dyn Error>> {
     let mut ctx = ctx::TranslationCtx::new(tcx, &opts);
 
     // Check that all trait laws are well-formed
     validate_traits(&mut ctx);
 
     ctx.load_metadata();
+    rustc_typeck::check_crate(tcx).map_err(|_| CrErr)?;
+
+    tcx.hir().par_body_owners(|def_id| tcx.ensure().check_match(def_id.to_def_id()));
+
+    if tcx.sess.has_errors() {
+        return Err(Box::new(CrErr));
+    }
 
     for def_id in ctx.tcx.hir().body_owners() {
         let def_id = def_id.to_def_id();
