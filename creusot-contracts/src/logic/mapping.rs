@@ -36,15 +36,14 @@ impl<A, B> EqLogic for Mapping<A, B> {
         std::process::abort()
     }
 
-    #[predicate]
-    fn log_ne(self, _: Self) -> bool {
-        std::process::abort()
+    #[logic]
+    fn log_ne(self, o: Self) -> bool {
+        ! self.log_eq(o)
     }
 
+    #[trusted]
     #[logic]
-    fn eq_ne(_: Self, _: Self) {
-        std::process::abort()
-    }
+    fn eq_ne(_ : Self, _ : Self) {}
 
     // lemmas below are marked trusted, until Creusot provides a way
     // to prove them
