@@ -1,0 +1,679 @@
+module Type
+  use Ref
+  use mach.int.Int
+  use prelude.Int8
+  use prelude.Int16
+  use mach.int.Int32
+  use mach.int.Int64
+  use prelude.UInt8
+  use prelude.UInt16
+  use mach.int.UInt32
+  use mach.int.UInt64
+  use string.Char
+  use floating_point.Single
+  use floating_point.Double
+  use prelude.Prelude
+  type core_option_option 't = 
+    | Core_Option_Option_None
+    | Core_Option_Option_Some 't
+    
+  function core_option_option_Some_0 (self : core_option_option 't) : 't
+  val core_option_option_Some_0 (self : core_option_option 't) : 't
+    ensures { result = core_option_option_Some_0 self }
+    
+  axiom core_option_option_Some_0_acc : forall a : 't . core_option_option_Some_0 (Core_Option_Option_Some a : core_option_option 't) = a
+  type redblack_color  = 
+    | RedBlack_Color_Red
+    | RedBlack_Color_Black
+    
+  type redblack_node 'k 'v = 
+    | RedBlack_Node (core_option_option (redblack_node 'k 'v)) (redblack_color) 'k 'v (core_option_option (redblack_node 'k 'v))
+    
+  function redblack_node_Node_left (self : redblack_node 'k 'v) : core_option_option (redblack_node 'k 'v)
+  val redblack_node_Node_left (self : redblack_node 'k 'v) : core_option_option (redblack_node 'k 'v)
+    ensures { result = redblack_node_Node_left self }
+    
+  axiom redblack_node_Node_left_acc : forall a : core_option_option (redblack_node 'k 'v), b : redblack_color, c : 'k, d : 'v, e : core_option_option (redblack_node 'k 'v) . redblack_node_Node_left (RedBlack_Node a b c d e : redblack_node 'k 'v) = a
+  function redblack_node_Node_right (self : redblack_node 'k 'v) : core_option_option (redblack_node 'k 'v)
+  val redblack_node_Node_right (self : redblack_node 'k 'v) : core_option_option (redblack_node 'k 'v)
+    ensures { result = redblack_node_Node_right self }
+    
+  axiom redblack_node_Node_right_acc : forall a : core_option_option (redblack_node 'k 'v), b : redblack_color, c : 'k, d : 'v, e : core_option_option (redblack_node 'k 'v) . redblack_node_Node_right (RedBlack_Node a b c d e : redblack_node 'k 'v) = e
+  function redblack_node_Node_color (self : redblack_node 'k 'v) : redblack_color
+  val redblack_node_Node_color (self : redblack_node 'k 'v) : redblack_color
+    ensures { result = redblack_node_Node_color self }
+    
+  axiom redblack_node_Node_color_acc : forall a : core_option_option (redblack_node 'k 'v), b : redblack_color, c : 'k, d : 'v, e : core_option_option (redblack_node 'k 'v) . redblack_node_Node_color (RedBlack_Node a b c d e : redblack_node 'k 'v) = b
+  function redblack_node_Node_key (self : redblack_node 'k 'v) : 'k
+  val redblack_node_Node_key (self : redblack_node 'k 'v) : 'k
+    ensures { result = redblack_node_Node_key self }
+    
+  axiom redblack_node_Node_key_acc : forall a : core_option_option (redblack_node 'k 'v), b : redblack_color, c : 'k, d : 'v, e : core_option_option (redblack_node 'k 'v) . redblack_node_Node_key (RedBlack_Node a b c d e : redblack_node 'k 'v) = c
+  type redblack_tree 'k 'v = 
+    | RedBlack_Tree (core_option_option (redblack_node 'k 'v))
+    
+  function redblack_tree_Tree_node (self : redblack_tree 'k 'v) : core_option_option (redblack_node 'k 'v)
+  val redblack_tree_Tree_node (self : redblack_tree 'k 'v) : core_option_option (redblack_node 'k 'v)
+    ensures { result = redblack_tree_Tree_node self }
+    
+  axiom redblack_tree_Tree_node_acc : forall a : core_option_option (redblack_node 'k 'v) . redblack_tree_Tree_node (RedBlack_Tree a : redblack_tree 'k 'v) = a
+  type core_cmp_ordering  = 
+    | Core_Cmp_Ordering_Less
+    | Core_Cmp_Ordering_Equal
+    | Core_Cmp_Ordering_Greater
+    
+end
+module Core_Mem_Take_Interface
+  type t   
+  use prelude.Prelude
+  val take [@cfg:stackify] (dest : borrowed t) : t
+    requires {false}
+    
+end
+module Core_Mem_Take
+  type t   
+  use prelude.Prelude
+  val take [@cfg:stackify] (dest : borrowed t) : t
+    requires {false}
+    
+end
+module Core_Mem_Swap_Interface
+  type t   
+  use prelude.Prelude
+  val swap [@cfg:stackify] (x : borrowed t) (y : borrowed t) : ()
+    requires {false}
+    
+end
+module Core_Mem_Swap
+  type t   
+  use prelude.Prelude
+  val swap [@cfg:stackify] (x : borrowed t) (y : borrowed t) : ()
+    requires {false}
+    
+end
+module RedBlack_Impl0_RotateRight_Interface
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  val rotate_right [@cfg:stackify] (self : borrowed (Type.redblack_node k v)) : ()
+end
+module RedBlack_Impl0_RotateRight
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  use mach.int.Int
+  use mach.int.Int64
+  clone Core_Mem_Swap_Interface as Swap1 with type t = Type.redblack_node k v
+  clone Core_Mem_Swap_Interface as Swap0 with type t = Type.core_option_option (Type.redblack_node k v)
+  clone Core_Mem_Take_Interface as Take0 with type t = Type.core_option_option (Type.redblack_node k v)
+  let rec cfg rotate_right [@cfg:stackify] (self : borrowed (Type.redblack_node k v)) : () = 
+  var _0 : ();
+  var self_1 : borrowed (Type.redblack_node k v);
+  var x_2 : Type.redblack_node k v;
+  var _3 : Type.core_option_option (Type.redblack_node k v);
+  var _4 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _5 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _6 : isize;
+  var x_7 : Type.redblack_node k v;
+  var _8 : ();
+  var _9 : ();
+  var _10 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _11 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _12 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _13 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _14 : ();
+  var _15 : borrowed (Type.redblack_node k v);
+  var _16 : borrowed (Type.redblack_node k v);
+  var _17 : borrowed (Type.redblack_node k v);
+  var _18 : Type.core_option_option (Type.redblack_node k v);
+  var _19 : Type.redblack_node k v;
+  {
+    self_1 <- self;
+    goto BB0
+  }
+  BB0 {
+    _5 <- borrow_mut (Type.redblack_node_Node_left ( * self_1));
+    self_1 <- { self_1 with current = (let Type.RedBlack_Node a b c d e =  * self_1 in Type.RedBlack_Node ( ^ _5) b c d e) };
+    _4 <- borrow_mut ( * _5);
+    _5 <- { _5 with current = ( ^ _4) };
+    _3 <- Take0.take _4;
+    goto BB1
+  }
+  BB1 {
+    assume { (fun x -> true) _5 };
+    switch (_3)
+      | Type.Core_Option_Option_None -> goto BB2
+      | Type.Core_Option_Option_Some _ -> goto BB4
+      end
+  }
+  BB2 {
+    assume { (fun x -> true) self_1 };
+    _0 <- ();
+    goto BB13
+  }
+  BB3 {
+    assume { (fun x -> true) self_1 };
+    assume { (fun x -> true) _3 };
+    absurd
+  }
+  BB4 {
+    assume { (fun x -> true) x_7 };
+    x_7 <- Type.core_option_option_Some_0 _3;
+    assume { (fun x -> true) x_2 };
+    x_2 <- x_7;
+    goto BB5
+  }
+  BB5 {
+    goto BB6
+  }
+  BB6 {
+    assume { (fun x -> true) _3 };
+    _11 <- borrow_mut (Type.redblack_node_Node_left ( * self_1));
+    self_1 <- { self_1 with current = (let Type.RedBlack_Node a b c d e =  * self_1 in Type.RedBlack_Node ( ^ _11) b c d e) };
+    _10 <- borrow_mut ( * _11);
+    _11 <- { _11 with current = ( ^ _10) };
+    _13 <- borrow_mut (Type.redblack_node_Node_right x_2);
+    x_2 <- (let Type.RedBlack_Node a b c d e = x_2 in Type.RedBlack_Node a b c d ( ^ _13));
+    _12 <- borrow_mut ( * _13);
+    _13 <- { _13 with current = ( ^ _12) };
+    _9 <- Swap0.swap _10 _12;
+    goto BB7
+  }
+  BB7 {
+    assume { (fun x -> true) _11 };
+    assume { (fun x -> true) _13 };
+    _15 <- borrow_mut ( * self_1);
+    self_1 <- { self_1 with current = ( ^ _15) };
+    _17 <- borrow_mut x_2;
+    x_2 <-  ^ _17;
+    _16 <- borrow_mut ( * _17);
+    _17 <- { _17 with current = ( ^ _16) };
+    _14 <- Swap1.swap _15 _16;
+    goto BB8
+  }
+  BB8 {
+    assume { (fun x -> true) _17 };
+    assume { (fun x -> true) _19 };
+    _19 <- x_2;
+    _18 <- Type.Core_Option_Option_Some _19;
+    goto BB9
+  }
+  BB9 {
+    assume { (fun x -> true) (Type.redblack_node_Node_right ( * self_1)) };
+    self_1 <- { self_1 with current = (let Type.RedBlack_Node a b c d e =  * self_1 in Type.RedBlack_Node a b c d _18) };
+    goto BB10
+  }
+  BB10 {
+    assume { (fun x -> true) self_1 };
+    goto BB11
+  }
+  BB11 {
+    _0 <- ();
+    goto BB12
+  }
+  BB12 {
+    goto BB14
+  }
+  BB13 {
+    assume { (fun x -> true) _3 };
+    goto BB14
+  }
+  BB14 {
+    return _0
+  }
+  
+end
+module RedBlack_Impl0_RotateLeft_Interface
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  val rotate_left [@cfg:stackify] (self : borrowed (Type.redblack_node k v)) : ()
+end
+module RedBlack_Impl0_RotateLeft
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  use mach.int.Int
+  use mach.int.Int64
+  clone Core_Mem_Swap_Interface as Swap1 with type t = Type.redblack_node k v
+  clone Core_Mem_Swap_Interface as Swap0 with type t = Type.core_option_option (Type.redblack_node k v)
+  clone Core_Mem_Take_Interface as Take0 with type t = Type.core_option_option (Type.redblack_node k v)
+  let rec cfg rotate_left [@cfg:stackify] (self : borrowed (Type.redblack_node k v)) : () = 
+  var _0 : ();
+  var self_1 : borrowed (Type.redblack_node k v);
+  var x_2 : Type.redblack_node k v;
+  var _3 : Type.core_option_option (Type.redblack_node k v);
+  var _4 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _5 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _6 : isize;
+  var x_7 : Type.redblack_node k v;
+  var _8 : ();
+  var _9 : ();
+  var _10 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _11 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _12 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _13 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _14 : ();
+  var _15 : borrowed (Type.redblack_node k v);
+  var _16 : borrowed (Type.redblack_node k v);
+  var _17 : borrowed (Type.redblack_node k v);
+  var _18 : Type.core_option_option (Type.redblack_node k v);
+  var _19 : Type.redblack_node k v;
+  {
+    self_1 <- self;
+    goto BB0
+  }
+  BB0 {
+    _5 <- borrow_mut (Type.redblack_node_Node_right ( * self_1));
+    self_1 <- { self_1 with current = (let Type.RedBlack_Node a b c d e =  * self_1 in Type.RedBlack_Node a b c d ( ^ _5)) };
+    _4 <- borrow_mut ( * _5);
+    _5 <- { _5 with current = ( ^ _4) };
+    _3 <- Take0.take _4;
+    goto BB1
+  }
+  BB1 {
+    assume { (fun x -> true) _5 };
+    switch (_3)
+      | Type.Core_Option_Option_None -> goto BB2
+      | Type.Core_Option_Option_Some _ -> goto BB4
+      end
+  }
+  BB2 {
+    assume { (fun x -> true) self_1 };
+    _0 <- ();
+    goto BB13
+  }
+  BB3 {
+    assume { (fun x -> true) self_1 };
+    assume { (fun x -> true) _3 };
+    absurd
+  }
+  BB4 {
+    assume { (fun x -> true) x_7 };
+    x_7 <- Type.core_option_option_Some_0 _3;
+    assume { (fun x -> true) x_2 };
+    x_2 <- x_7;
+    goto BB5
+  }
+  BB5 {
+    goto BB6
+  }
+  BB6 {
+    assume { (fun x -> true) _3 };
+    _11 <- borrow_mut (Type.redblack_node_Node_right x_2);
+    x_2 <- (let Type.RedBlack_Node a b c d e = x_2 in Type.RedBlack_Node a b c d ( ^ _11));
+    _10 <- borrow_mut ( * _11);
+    _11 <- { _11 with current = ( ^ _10) };
+    _13 <- borrow_mut (Type.redblack_node_Node_left ( * self_1));
+    self_1 <- { self_1 with current = (let Type.RedBlack_Node a b c d e =  * self_1 in Type.RedBlack_Node ( ^ _13) b c d e) };
+    _12 <- borrow_mut ( * _13);
+    _13 <- { _13 with current = ( ^ _12) };
+    _9 <- Swap0.swap _10 _12;
+    goto BB7
+  }
+  BB7 {
+    assume { (fun x -> true) _11 };
+    assume { (fun x -> true) _13 };
+    _15 <- borrow_mut ( * self_1);
+    self_1 <- { self_1 with current = ( ^ _15) };
+    _17 <- borrow_mut x_2;
+    x_2 <-  ^ _17;
+    _16 <- borrow_mut ( * _17);
+    _17 <- { _17 with current = ( ^ _16) };
+    _14 <- Swap1.swap _15 _16;
+    goto BB8
+  }
+  BB8 {
+    assume { (fun x -> true) _17 };
+    assume { (fun x -> true) _19 };
+    _19 <- x_2;
+    _18 <- Type.Core_Option_Option_Some _19;
+    goto BB9
+  }
+  BB9 {
+    assume { (fun x -> true) (Type.redblack_node_Node_left ( * self_1)) };
+    self_1 <- { self_1 with current = (let Type.RedBlack_Node a b c d e =  * self_1 in Type.RedBlack_Node _18 b c d e) };
+    goto BB10
+  }
+  BB10 {
+    assume { (fun x -> true) self_1 };
+    goto BB11
+  }
+  BB11 {
+    _0 <- ();
+    goto BB12
+  }
+  BB12 {
+    goto BB14
+  }
+  BB13 {
+    assume { (fun x -> true) _3 };
+    goto BB14
+  }
+  BB14 {
+    return _0
+  }
+  
+end
+module RedBlack_Impl1_Fixup_Interface
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  val fixup [@cfg:stackify] (self : borrowed (Type.redblack_tree k v)) : ()
+end
+module RedBlack_Impl1_Fixup
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  use mach.int.Int
+  use mach.int.Int64
+  let rec cfg fixup [@cfg:stackify] (self : borrowed (Type.redblack_tree k v)) : () = 
+  var _0 : ();
+  var self_1 : borrowed (Type.redblack_tree k v);
+  var needle_2 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _3 : ();
+  var _4 : isize;
+  var node_5 : borrowed (Type.redblack_node k v);
+  var _6 : isize;
+  var _7 : ();
+  var _8 : ();
+  var _9 : ();
+  var _10 : ();
+  {
+    self_1 <- self;
+    goto BB0
+  }
+  BB0 {
+    needle_2 <- borrow_mut (Type.redblack_tree_Tree_node ( * self_1));
+    self_1 <- { self_1 with current = (let Type.RedBlack_Tree a =  * self_1 in Type.RedBlack_Tree ( ^ needle_2)) };
+    assume { (fun x -> true) self_1 };
+    goto BB1
+  }
+  BB1 {
+    switch ( * needle_2)
+      | Type.Core_Option_Option_Some _ -> goto BB2
+      | _ -> goto BB5
+      end
+  }
+  BB2 {
+    node_5 <- borrow_mut (Type.core_option_option_Some_0 ( * needle_2));
+    needle_2 <- { needle_2 with current = (let Type.Core_Option_Option_Some a =  * needle_2 in Type.Core_Option_Option_Some ( ^ node_5)) };
+    assume { (fun x -> true) node_5 };
+    switch (Type.redblack_node_Node_color ( * node_5))
+      | Type.RedBlack_Color_Black -> goto BB3
+      | _ -> goto BB4
+      end
+  }
+  BB3 {
+    assume { (fun x -> true) needle_2 };
+    _0 <- ();
+    goto BB6
+  }
+  BB4 {
+    _3 <- ();
+    assume { (fun x -> true) _3 };
+    goto BB1
+  }
+  BB5 {
+    assume { (fun x -> true) needle_2 };
+    _0 <- ();
+    goto BB6
+  }
+  BB6 {
+    return _0
+  }
+  
+end
+module Core_Cmp_PartialOrd_PartialCmp_Interface
+  type self   
+  type rhs   
+  use prelude.Prelude
+  use Type
+  val partial_cmp [@cfg:stackify] (self : self) (other : rhs) : Type.core_option_option (Type.core_cmp_ordering)
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_PartialCmp
+  type self   
+  type rhs   
+  use prelude.Prelude
+  use Type
+  val partial_cmp [@cfg:stackify] (self : self) (other : rhs) : Type.core_option_option (Type.core_cmp_ordering)
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Lt_Interface
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val lt [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Lt
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val lt [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Le_Interface
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val le [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Le
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val le [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Gt_Interface
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val gt [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Gt
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val gt [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Ge_Interface
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val ge [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module Core_Cmp_PartialOrd_Ge
+  type self   
+  type rhs   
+  use prelude.Prelude
+  val ge [@cfg:stackify] (self : self) (other : rhs) : bool
+    requires {false}
+    
+end
+module RedBlack_Impl1_Insert_Interface
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  val insert [@cfg:stackify] (self : borrowed (Type.redblack_tree k v)) (k : k) (v : v) : ()
+end
+module RedBlack_Impl1_Insert
+  type k   
+  type v   
+  use prelude.Prelude
+  use Type
+  use mach.int.Int
+  use mach.int.Int64
+  clone Core_Cmp_PartialOrd_Lt_Interface as Lt0 with type self = k, type rhs = k
+  clone RedBlack_Impl1_Fixup_Interface as Fixup0 with type k = k, type v = v
+  let rec cfg insert [@cfg:stackify] (self : borrowed (Type.redblack_tree k v)) (k : k) (v : v) : () = 
+  var _0 : ();
+  var self_1 : borrowed (Type.redblack_tree k v);
+  var k_2 : k;
+  var v_3 : v;
+  var needle_4 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _5 : ();
+  var _6 : ();
+  var _7 : isize;
+  var node_8 : borrowed (Type.redblack_node k v);
+  var _9 : bool;
+  var _10 : k;
+  var _11 : k;
+  var _12 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _13 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _14 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _15 : borrowed (Type.core_option_option (Type.redblack_node k v));
+  var _16 : ();
+  var _17 : ();
+  var _18 : ();
+  var _19 : Type.core_option_option (Type.redblack_node k v);
+  var _20 : Type.redblack_node k v;
+  var _21 : Type.redblack_node k v;
+  var _22 : Type.core_option_option (Type.redblack_node k v);
+  var _23 : k;
+  var _24 : v;
+  var _25 : Type.core_option_option (Type.redblack_node k v);
+  var _26 : Type.redblack_color;
+  var _27 : ();
+  var _28 : borrowed (Type.redblack_tree k v);
+  {
+    self_1 <- self;
+    k_2 <- k;
+    v_3 <- v;
+    goto BB0
+  }
+  BB0 {
+    needle_4 <- borrow_mut (Type.redblack_tree_Tree_node ( * self_1));
+    self_1 <- { self_1 with current = (let Type.RedBlack_Tree a =  * self_1 in Type.RedBlack_Tree ( ^ needle_4)) };
+    goto BB1
+  }
+  BB1 {
+    switch ( * needle_4)
+      | Type.Core_Option_Option_Some _ -> goto BB2
+      | _ -> goto BB7
+      end
+  }
+  BB2 {
+    node_8 <- borrow_mut (Type.core_option_option_Some_0 ( * needle_4));
+    needle_4 <- { needle_4 with current = (let Type.Core_Option_Option_Some a =  * needle_4 in Type.Core_Option_Option_Some ( ^ node_8)) };
+    assume { (fun x -> true) needle_4 };
+    _10 <- k_2;
+    _11 <- Type.redblack_node_Node_key ( * node_8);
+    _9 <- Lt0.lt _10 _11;
+    goto BB3
+  }
+  BB3 {
+    switch (_9)
+      | False -> goto BB5
+      | _ -> goto BB4
+      end
+  }
+  BB4 {
+    _13 <- borrow_mut (Type.redblack_node_Node_left ( * node_8));
+    node_8 <- { node_8 with current = (let Type.RedBlack_Node a b c d e =  * node_8 in Type.RedBlack_Node ( ^ _13) b c d e) };
+    assume { (fun x -> true) node_8 };
+    _12 <- borrow_mut ( * _13);
+    _13 <- { _13 with current = ( ^ _12) };
+    assume { (fun x -> true) _13 };
+    assume { (fun x -> true) needle_4 };
+    needle_4 <- _12;
+    _6 <- ();
+    assume { (fun x -> true) _6 };
+    goto BB6
+  }
+  BB5 {
+    _15 <- borrow_mut (Type.redblack_node_Node_right ( * node_8));
+    node_8 <- { node_8 with current = (let Type.RedBlack_Node a b c d e =  * node_8 in Type.RedBlack_Node a b c d ( ^ _15)) };
+    assume { (fun x -> true) node_8 };
+    _14 <- borrow_mut ( * _15);
+    _15 <- { _15 with current = ( ^ _14) };
+    assume { (fun x -> true) _15 };
+    assume { (fun x -> true) needle_4 };
+    needle_4 <- _14;
+    _6 <- ();
+    assume { (fun x -> true) _6 };
+    goto BB6
+  }
+  BB6 {
+    goto BB1
+  }
+  BB7 {
+    _5 <- ();
+    assume { (fun x -> true) _5 };
+    _22 <- Type.Core_Option_Option_None;
+    assume { (fun x -> true) _23 };
+    _23 <- k_2;
+    assume { (fun x -> true) _24 };
+    _24 <- v_3;
+    _25 <- Type.Core_Option_Option_None;
+    _26 <- Type.RedBlack_Color_Red;
+    _21 <- Type.RedBlack_Node _22 _26 _23 _24 _25;
+    goto BB8
+  }
+  BB8 {
+    goto BB9
+  }
+  BB9 {
+    goto BB10
+  }
+  BB10 {
+    goto BB11
+  }
+  BB11 {
+    _20 <- _21;
+    goto BB12
+  }
+  BB12 {
+    _19 <- Type.Core_Option_Option_Some _20;
+    goto BB13
+  }
+  BB13 {
+    assume { (fun x -> true) ( * needle_4) };
+    needle_4 <- { needle_4 with current = _19 };
+    goto BB14
+  }
+  BB14 {
+    assume { (fun x -> true) needle_4 };
+    goto BB15
+  }
+  BB15 {
+    _28 <- borrow_mut ( * self_1);
+    self_1 <- { self_1 with current = ( ^ _28) };
+    _27 <- Fixup0.fixup _28;
+    goto BB16
+  }
+  BB16 {
+    assume { (fun x -> true) self_1 };
+    _0 <- ();
+    goto BB17
+  }
+  BB17 {
+    goto BB18
+  }
+  BB18 {
+    return _0
+  }
+  
+end
