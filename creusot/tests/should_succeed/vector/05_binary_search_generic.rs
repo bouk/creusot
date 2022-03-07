@@ -17,14 +17,13 @@ fn sorted<T: Ord>(s: Seq<T>) -> bool {
     sorted_range(s, 0, s.len())
 }
 
-#[requires((@arr).len() <= @usize::MAX)]
 #[requires(sorted(@arr))]
 #[ensures(forall<x:usize> result === Ok(x) ==> (@arr)[@x] == elem)]
 #[ensures(forall<x:usize> result === Err(x) ==>
     forall<i:usize>  i < x ==> (@arr)[@i] <= elem)]
 #[ensures(forall<x:usize> result === Err(x) ==>
     forall<i:usize> x <= i && @i < (@arr).len() ==> elem < (@arr)[@i])]
-fn binary_search<T: Ord>(arr: &Vec<T>, elem: T) -> Result<usize, usize> {
+fn binary_search<T: Ord>(arr: &[T], elem: T) -> Result<usize, usize> {
     if arr.len() == 0 {
         return Err(0);
     }
