@@ -117,3 +117,15 @@ impl<T> std::ops::Index<Int> for Seq<T> {
         std::process::abort()
     }
 }
+
+impl<I, T> std::ops::Index<I> for Seq<T>
+    where I : Model<ModelTy = Int> {
+    type Output = T;
+
+    #[trusted]
+    #[logic]
+    #[creusot::builtins = "seq.Seq.get"]
+    fn index(&self, _: I) -> &T {
+        std::process::abort()
+    }
+}

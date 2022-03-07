@@ -1,5 +1,6 @@
 use crate::ctx::*;
 use crate::function::all_generic_decls_for;
+use crate::translation::traits::resolve_opt;
 use crate::translation::translate_logic_or_predicate;
 use crate::util::item_type;
 use indexmap::IndexSet;
@@ -110,15 +111,18 @@ pub(crate) fn extract_extern_specs_from_item(
 
     let (id, subst) = visit.items.pop().unwrap();
 
-    // The parameters in the extern spec may have been declared in a different order from the original defition
-    // However, the must be a permutation of them. We create substitution which allows us to map from the inner
-    // definiton to the parameters of the outer definition.
+    let (id, subst) = resolve_opt(ctx.tcx, ctx.param_env(def_id), id, subst)
+        .unwrap_or((id, subst)); // when not a trait function
+
+    // TODO: Enforce that the substitution is 1-1
     let inner_subst = InternalSubsts::identity_for_item(ctx.tcx, id);
     let outer_subst = InternalSubsts::identity_for_item(ctx.tcx, def_id.to_def_id());
+    // eprintln!("{:?} {:?} {:?} {:?} {:?}", id, re, subst, inner_subst, outer_subst);
+
     let inverse = InternalSubsts::for_item(ctx.tcx, def_id.to_def_id(), |arg, _| {
-        let param = outer_subst[arg.index as usize];
-        let ix = subst.iter().position(|e| e == param).unwrap();
-        inner_subst[ix]
+        // let param = outer_subst[arg.index as usize];
+        // let ix = subst.iter().position(|e| e == param).unwrap();
+        inner_subst[arg.index as usize]
     });
 
     let mut contract = crate::specification::contract_of(ctx, def_id.to_def_id()).unwrap();
