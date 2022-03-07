@@ -19,7 +19,7 @@ fn sorted<T: Ord>(s: Seq<T>) -> bool {
 
 #[ensures(sorted(@^v))]
 #[ensures((@^v).permutation_of(@*v))]
-fn gnome_sort<T: Ord>(v: &mut Vec<T>) {
+fn gnome_sort<T: Ord>(v: &mut [T]) {
     let old_v = Ghost::record(&v);
     let mut i = 0;
     #[invariant(sorted, sorted_range(@v, 0, @i))]
