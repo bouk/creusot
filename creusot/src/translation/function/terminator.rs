@@ -200,7 +200,6 @@ fn evaluate_additional_predicates(
 ) -> Result<(), Vec<FulfillmentError<'tcx>>> {
     let mut fulfill_cx = FulfillmentContext::new();
     for predicate in p {
-        eprintln!("{:?}", predicate);
         let cause = ObligationCause::dummy_with_span(sp);
         let obligation = Obligation { cause, param_env, recursion_depth: 0, predicate };
         // holds &= infcx.predicate_may_hold(&obligation);
