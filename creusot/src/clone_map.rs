@@ -71,6 +71,7 @@ pub struct CloneMap<'tcx> {
     prelude: IndexMap<QName, bool>,
     pub names: IndexMap<CloneNode<'tcx>, CloneInfo<'tcx>>,
 
+    param_env: ParamEnv<'tcx>,
     // Track how many instances of a name already exist
     name_counts: IndexMap<Symbol, usize>,
 
@@ -178,6 +179,7 @@ impl<'tcx> CloneMap<'tcx> {
             tcx,
             self_id,
             names,
+            param_env: tcx.param_env(self_id),
             name_counts: Default::default(),
             prelude: IndexMap::new(),
             use_full_clones,
@@ -185,6 +187,10 @@ impl<'tcx> CloneMap<'tcx> {
             last_cloned: 0,
             public: false,
         }
+    }
+
+    pub fn param_env(&mut self, env: ParamEnv<'tcx>) {
+        self.param_env = env;
     }
 
     pub fn summary(&self) -> CloneSummary<'tcx> {
