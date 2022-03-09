@@ -162,55 +162,55 @@ extern_spec! {
                 T : IndexMutSpec<I>,
 }
 
-trait SliceIndexSpec<T : ?Sized> : SliceIndex<T>
+trait SeqIndex<T > : SliceIndex<[T]>
     {
     // Check whether an index is 'in bounds' for a structure
     #[predicate]
-    fn in_bounds(self, s: T) -> bool;
+    fn in_bounds(self, s: Seq<T>) -> bool;
 
     // Condition underwhich we get `out` from index `i` in `self`
     #[predicate]
-    fn has_elem_at(self, s: T, out: Self::Output) -> bool;
+    fn has_elem_at(self, s: Seq<T>, out: Self::Output) -> bool;
 
     // Explains what happens to the elements we didn't index
     #[predicate]
-    fn resolve_except(self, s: &mut T) -> bool;
+    fn resolve_except(self, old: Seq<T>, new: Seq<T>) -> bool;
 }
 
-// We probably want to move these into a `SliceIndexSpec` trait as well...
-impl<T, I : SliceIndexSpec<[T]>,A : std::alloc::Allocator> IndexMutSpec<I> for Vec<T, A> {
+// We probably want to move these into a `SeqIndex` trait as well...
+impl<T, I : SeqIndex<T>,A : std::alloc::Allocator> IndexMutSpec<I> for Vec<T, A> {
     #[predicate]
     fn in_bounds(self, i : I) -> bool {
-        pearlite! { i.in_bounds(self) }
+        pearlite! { i.in_bounds(@self) }
     }
 
     #[predicate]
     fn has_elem_at(self, i: I, out: Self::Output) -> bool {
-        pearlite! { i.has_elem_at(self, out) }
+        pearlite! { i.has_elem_at(@self, out) }
     }
 
     #[predicate]
     fn resolve_except(&mut self, i : I) -> bool {
-        pearlite! { i.resolve_except(self) }
+        pearlite! { i.resolve_except(@*self, @^self) }
     }
 }
 
-impl<T> SliceIndexSpec<[T]> for usize {
+impl<T> SeqIndex<T> for usize {
     #[predicate]
-    fn in_bounds(self, s: [T]) -> bool {
-        pearlite! { @self < (@s).len() }
+    fn in_bounds(self, s: Seq<T>) -> bool {
+        pearlite! { @self < (s).len() }
     }
 
     #[predicate]
-    fn has_elem_at(self, s: [T], out: Self::Output) -> bool {
-        pearlite! { (@s)[@self] === out }
+    fn has_elem_at(self, s: Seq<T>, out: Self::Output) -> bool {
+        pearlite! { (s)[@self] === out }
     }
 
     #[predicate]
-    fn resolve_except(self, old: [T], new: [T]) -> bool {
+    fn resolve_except(self, old: Seq<T>, new: Seq<T>) -> bool {
         pearlite! {
-            (@old).len() === (@new).len() &&
-            forall<i : Int> 0 <= i && i != @self && i < (@old).len() ==> (@old)[i] === (@new)[i]
+            (old).len() === (new).len() &&
+            forall<i : Int> 0 <= i && i != @self && i < (old).len() ==> (old)[i] === (new)[i]
         }
     }
 }
@@ -221,7 +221,7 @@ extern_spec! {
     #[ensures((*self_).has_elem_at(ix, *result))]
     #[ensures((^self_).has_elem_at(ix, ^result))]
     #[ensures(self_.resolve_except(ix))]
-    fn std::vec::Vec::index_mut<T, I : SliceIndexSpec<[T]>, A : std::alloc::Allocator>(self_: &mut Vec<T, A>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
+    fn std::vec::Vec::index_mut<T, I : SeqIndex<T>, A : std::alloc::Allocator>(self_: &mut Vec<T, A>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
         // where [T] : IndexMutSpec<I>
 }
 
@@ -233,7 +233,7 @@ extern_spec! {
 //     where crate::Seq<T> : Index<I, Output = <I as SliceIndex<[T]>>::Output>
 // }
 
-// trait SliceIndexSpec<T> : SliceIndex<[T]> {
+// trait SeqIndex<T> : SliceIndex<[T]> {
 //     // type Output;
 
 //     #[predicate]
@@ -244,7 +244,7 @@ extern_spec! {
 //     fn partition(self, seq: Seq<T>, res: Self::Output) -> bool;
 // }
 
-// impl<T> SliceIndexSpec<T> for usize {
+// impl<T> SeqIndex<T> for usize {
 //     #[predicate]
 //     fn in_bounds(self, seq: Seq<T>) -> bool {
 //         pearlite! { @self < seq.len() }
@@ -266,7 +266,7 @@ extern_spec! {
 //   #[requires(ix.in_bounds(@self_))]
 //   #[ensures(ix.partition(@*self_, *result))]
 //   #[ensures(ix.partition(@^self_, ^result))]
-//   fn std::vec::Vec::index_mut<T, I : SliceIndexSpec<T>>(self_: &mut Vec<T>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
+//   fn std::vec::Vec::index_mut<T, I : SeqIndex<T>>(self_: &mut Vec<T>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
 //     // where crate::Seq<T> : Index<I>,
 //     //       <I as SliceIndex<[T]>>::Output : Model,
 // }
