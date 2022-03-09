@@ -137,14 +137,14 @@ extern_spec! {
         where T : IndexSpec<I>
 }
 
-trait IndexMutSpec<I> : IndexMut<I> + IndexSpec<I> {
-    // // Check whether an index is 'in bounds' for a structure
-    // #[predicate]
-    // fn in_bounds(self, i: I) -> bool;
+trait IndexMutSpec<I> : IndexMut<I> {
+    // Check whether an index is 'in bounds' for a structure
+    #[predicate]
+    fn in_bounds(self, i: I) -> bool;
 
-    // // Condition underwhich we get `out` from index `i` in `self`
-    // #[predicate]
-    // fn has_elem_at(self, i: I, out: Self::Output) -> bool;
+    // Condition underwhich we get `out` from index `i` in `self`
+    #[predicate]
+    fn has_elem_at(self, i: I, out: Self::Output) -> bool;
 
     // Explains what happens to the elements we didn't index
     #[predicate]
@@ -162,7 +162,7 @@ extern_spec! {
                 T : IndexMutSpec<I>,
 }
 
-trait SliceIndexSpec<T> : SliceIndex<T>
+trait SliceIndexSpec<T : ?Sized> : SliceIndex<T>
     {
     // Check whether an index is 'in bounds' for a structure
     #[predicate]
@@ -221,7 +221,7 @@ extern_spec! {
     #[ensures((*self_).has_elem_at(ix, *result))]
     #[ensures((^self_).has_elem_at(ix, ^result))]
     #[ensures(self_.resolve_except(ix))]
-    fn std::vec::Vec::index_mut<T, I : SliceIndexSpec<T>, A : std::alloc::Allocator>(self_: &mut Vec<T, A>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
+    fn std::vec::Vec::index_mut<T, I : SliceIndexSpec<[T]>, A : std::alloc::Allocator>(self_: &mut Vec<T, A>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
         // where [T] : IndexMutSpec<I>
 }
 

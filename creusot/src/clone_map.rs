@@ -7,6 +7,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{
     self,
     subst::{InternalSubsts, Subst, SubstsRef},
+    ParamEnv,
     TyCtxt,
 };
 use rustc_middle::ty::{DefIdTree, ProjectionTy, Ty, TyKind};
@@ -399,7 +400,7 @@ impl<'tcx> CloneMap<'tcx> {
     ) -> DepNode<'tcx> {
         let dep = (dep.0, dep.1.subst(self.tcx, subst));
 
-        let param_env = ctx.tcx.param_env(self.self_id);
+        let param_env = self.param_env;
         let resolved = traits::resolve_opt(ctx.tcx, param_env, dep.0, dep.1).unwrap_or(dep);
         let resolved = self.closure_hack(resolved.0, resolved.1);
 
