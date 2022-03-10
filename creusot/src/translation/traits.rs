@@ -1,4 +1,6 @@
 use rustc_hir::def_id::DefId;
+use rustc_hir::Constness;
+use rustc_infer::traits::Reveal;
 use rustc_middle::ty::{subst::SubstsRef, AssocItemContainer::*, ParamEnv, TraitRef, TyCtxt};
 use rustc_trait_selection::traits::ImplSource;
 
@@ -42,6 +44,24 @@ impl<'tcx> TranslationCtx<'_, 'tcx> {
         let mut decls: Vec<_> = own_generic_decls_for(self.tcx, impl_id).collect();
         let trait_assocs = self.tcx.associated_items(trait_ref.def_id);
         let mut names = CloneMap::new(self.tcx, impl_id, true);
+
+        let mut additional_predicates = Vec::new();
+
+        let impl_subst = InternalSubsts::identity_for_item(self.tcx, impl_id);
+        for item in associated_items(self.tcx, impl_id) {
+            if let Some(spec) = self.extern_spec(item.def_id) {
+                additional_predicates.extend(spec.predicates_for(self.tcx, impl_subst));
+            }
+        }
+
+        additional_predicates.extend(self.param_env(impl_id).caller_bounds());
+        let param_env = ParamEnv::new(
+            self.mk_predicates(additional_predicates.into_iter()),
+            Reveal::UserFacing,
+            Constness::NotConst,
+        );
+
+        names.param_env(param_env);
 
         let mut laws = Vec::new();
         for item in associated_items(self.tcx, impl_id) {

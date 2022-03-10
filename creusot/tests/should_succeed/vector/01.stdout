@@ -451,36 +451,31 @@ module Alloc_Vec_Impl16
   type t   
   type i   
   type a   
-  use Type
   use prelude.Prelude
   use seq.Seq
-  clone CreusotContracts_Std1_Vec_SeqIndex_ResolveExcept as ResolveExcept2 with type self = i, type t = t
-  clone CreusotContracts_Std1_Vec_SeqIndex_InBounds as InBounds2 with type self = i, type t = t
+  use Type
+  clone CreusotContracts_Std1_Vec_SeqIndex_ResolveExcept as ResolveExcept1 with type self = i, type t = t
+  clone CreusotContracts_Std1_Vec_SeqIndex_InBounds as InBounds1 with type self = i, type t = t
   clone CreusotContracts_Std1_Vec_Impl0_Model as Model0 with type t = t, type a = a
   clone CreusotContracts_Std1_Vec_Impl1_ResolveExcept as ResolveExcept0 with type t = t, type i = i, type a = a,
-  function Model0.model = Model0.model, predicate ResolveExcept0.resolve_except = ResolveExcept2.resolve_except
+  function Model0.model = Model0.model, predicate ResolveExcept0.resolve_except = ResolveExcept1.resolve_except
   clone CreusotContracts_Std1_Vec_Impl1_InBounds as InBounds0 with type t = t, type i = i, type a = a,
-  function Model0.model = Model0.model, predicate InBounds0.in_bounds = InBounds2.in_bounds
-  clone CreusotContracts_Std1_Vec_IndexMutSpec_ResolveExcept as ResolveExcept1 with type self = Type.alloc_vec_vec t a,
-  type i = i
-  clone CreusotContracts_Std1_Vec_IndexMutSpec_InBounds as InBounds1 with type self = Type.alloc_vec_vec t a, type i = i
+  function Model0.model = Model0.model, predicate InBounds0.in_bounds = InBounds1.in_bounds
   clone Core_Slice_Index_SliceIndex_Output as Output0 with type self = i, type t = seq t
-  clone CreusotContracts_Std1_Vec_SeqIndex_HasElemAt as HasElemAt2 with type self = i, type t = t,
+  clone CreusotContracts_Std1_Vec_SeqIndex_HasElemAt as HasElemAt1 with type self = i, type t = t,
   type Output0.output = Output0.output
   clone CreusotContracts_Std1_Vec_Impl1_HasElemAt as HasElemAt0 with type t = t, type i = i, type a = a,
   type Output0.output = Output0.output, function Model0.model = Model0.model,
-  predicate HasElemAt0.has_elem_at = HasElemAt2.has_elem_at
+  predicate HasElemAt0.has_elem_at = HasElemAt1.has_elem_at
   clone Alloc_Vec_Impl16_IndexMut_Interface as IndexMut0 with type t = t, type i = i, type a = a,
   predicate InBounds0.in_bounds = InBounds0.in_bounds,
   predicate ResolveExcept0.resolve_except = ResolveExcept0.resolve_except,
   predicate HasElemAt0.has_elem_at = HasElemAt0.has_elem_at, type Output0.output = Output0.output
   clone Alloc_Vec_Impl15_Output as Output1 with type t = t, type i = i, type a = a, type Output0.output = Output0.output
-  clone CreusotContracts_Std1_Vec_IndexMutSpec_HasElemAt as HasElemAt1 with type self = Type.alloc_vec_vec t a,
-  type i = i, type Output0.output = Output1.output
   clone Core_Ops_Index_IndexMut_IndexMut_Interface as IndexMut1 with type self = Type.alloc_vec_vec t a, type idx = i,
-  val index_mut = IndexMut0.index_mut, predicate InBounds0.in_bounds = InBounds1.in_bounds,
-  predicate ResolveExcept0.resolve_except = ResolveExcept1.resolve_except,
-  predicate HasElemAt0.has_elem_at = HasElemAt1.has_elem_at, type Output0.output = Output1.output
+  val index_mut = IndexMut0.index_mut, predicate InBounds0.in_bounds = InBounds0.in_bounds,
+  predicate ResolveExcept0.resolve_except = ResolveExcept0.resolve_except,
+  predicate HasElemAt0.has_elem_at = HasElemAt0.has_elem_at, type Output0.output = Output1.output
 end
 module CreusotContracts_Logic_Resolve_Impl1
   type t   
