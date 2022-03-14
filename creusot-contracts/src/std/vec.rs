@@ -119,23 +119,23 @@ use std::ops::{Index, IndexMut};
 //     }
 // }
 //
-trait IndexSpec<I> : Index<I> {
+// trait IndexSpec<I> : Index<I> {
 
-    // Check whether an index is 'in bounds' for a structure
-    #[predicate]
-    fn in_bounds(self, i: I) -> bool;
+//     // Check whether an index is 'in bounds' for a structure
+//     #[predicate]
+//     fn in_bounds(self, i: I) -> bool;
 
-    // Condition under which we get `out` from index `i` in `self`
-    #[predicate]
-    fn has_elem_at(self, i: I, out: Self::Output) -> bool;
-}
+//     // Condition under which we get `out` from index `i` in `self`
+//     #[predicate]
+//     fn has_elem_at(self, i: I, out: Self::Output) -> bool;
+// }
 
-extern_spec! {
-    #[requires(self_.in_bounds(i))]
-    #[ensures(self_.has_elem_at(i, *result))]
-    fn std::ops::Index::index<T, I>(self_: &T, i: I) -> &T::Output
-        where T : IndexSpec<I>
-}
+// extern_spec! {
+//     #[requires(self_.in_bounds(i))]
+//     #[ensures(self_.has_elem_at(i, *result))]
+//     fn std::ops::Index::index<T, I>(self_: &T, i: I) -> &T::Output
+//         where T : IndexSpec<I>
+// }
 
 trait IndexMutSpec<I> : IndexMut<I> {
     // Check whether an index is 'in bounds' for a structure
@@ -152,77 +152,105 @@ trait IndexMutSpec<I> : IndexMut<I> {
 }
 
 
-extern_spec! {
-    #[requires(self_.in_bounds(i))]
-    #[ensures((*self_).has_elem_at(i, *result))]
-    #[ensures((^self_).has_elem_at(i, ^result))]
-    #[ensures(self_.resolve_except(i))]
-    fn std::ops::IndexMut::index_mut<T, I>(self_: &mut T, i: I) -> &mut T::Output
-        where
-                T : IndexMutSpec<I>,
-}
+// extern_spec! {
+//     #[requires(self_.in_bounds(i))]
+//     #[ensures((*self_).has_elem_at(i, *result))]
+//     #[ensures((^self_).has_elem_at(i, ^result))]
+//     #[ensures(self_.resolve_except(i))]
+//     fn std::ops::IndexMut::index_mut<T, I>(self_: &mut T, i: I) -> &mut T::Output
+//         where
+//                 T : IndexMutSpec<I>,
+// }
 
-trait SeqIndex<T > : SliceIndex<[T]>
+trait SeqIndex<S, T> : SliceIndex<[T]>
+    where S : Model<ModelTy = Seq<T>>
     {
     // Check whether an index is 'in bounds' for a structure
     #[predicate]
-    fn in_bounds(self, s: Seq<T>) -> bool;
+    fn in_bounds(self, s: S) -> bool;
 
     // Condition underwhich we get `out` from index `i` in `self`
     #[predicate]
-    fn has_elem_at(self, s: Seq<T>, out: Self::Output) -> bool;
+    fn has_elem_at(self, s: S, out: Self::Output) -> bool;
 
     // Explains what happens to the elements we didn't index
-    #[predicate]
-    fn resolve_except(self, old: Seq<T>, new: Seq<T>) -> bool;
+    // #[predicate]
+    fn resolve_except(self, s: &mut S) -> bool;
 }
 
-// We probably want to move these into a `SeqIndex` trait as well...
-impl<T, I : SeqIndex<T>,A : std::alloc::Allocator> IndexMutSpec<I> for Vec<T, A> {
+// // We probably want to move these into a `SeqIndex` trait as well...
+// impl<T, I : SeqIndex<T>,A : std::alloc::Allocator> IndexMutSpec<I> for Vec<T, A> {
+//     #[predicate]
+//     fn in_bounds(self, i : I) -> bool {
+//         pearlite! { i.in_bounds(@self) }
+//     }
+
+//     #[predicate]
+//     fn has_elem_at(self, i: I, out: Self::Output) -> bool {
+//         pearlite! { i.has_elem_at(@self, out) }
+//     }
+
+//     #[predicate]
+//     fn resolve_except(&mut self, i : I) -> bool {
+//         pearlite! { i.resolve_except(@*self, @^self) }
+//     }
+// }
+
+impl<S : Model<ModelTy = Seq<T>>, T> SeqIndex<S, T> for usize {
     #[predicate]
-    fn in_bounds(self, i : I) -> bool {
-        pearlite! { i.in_bounds(@self) }
+    fn in_bounds(self, s: S) -> bool {
+        pearlite! { @self < (@s).len() }
     }
 
     #[predicate]
-    fn has_elem_at(self, i: I, out: Self::Output) -> bool {
-        pearlite! { i.has_elem_at(@self, out) }
+    fn has_elem_at(self, s: S, out: Self::Output) -> bool {
+        pearlite! { (@s)[@self] === out }
     }
 
     #[predicate]
-    fn resolve_except(&mut self, i : I) -> bool {
-        pearlite! { i.resolve_except(@*self, @^self) }
-    }
-}
-
-impl<T> SeqIndex<T> for usize {
-    #[predicate]
-    fn in_bounds(self, s: Seq<T>) -> bool {
-        pearlite! { @self < (s).len() }
-    }
-
-    #[predicate]
-    fn has_elem_at(self, s: Seq<T>, out: Self::Output) -> bool {
-        pearlite! { (s)[@self] === out }
-    }
-
-    #[predicate]
-    fn resolve_except(self, old: Seq<T>, new: Seq<T>) -> bool {
+    fn resolve_except(self, s: &mut S) -> bool {
         pearlite! {
-            (old).len() === (new).len() &&
-            forall<i : Int> 0 <= i && i != @self && i < (old).len() ==> (old)[i] === (new)[i]
+            true
+            // (old).len() === (new).len() &&
+            // forall<i : Int> 0 <= i && i != @self && i < (old).len() ==> (old)[i] === (new)[i]
         }
     }
 }
 
+// impl<T, A : std::alloc::Allocator, I : SliceIndex<[T]>> IndexMutSpec<I> for Vec<T, A> {
+
+impl<T, A : std::alloc::Allocator, I : SeqIndex<Vec<T>, T>> IndexMutSpec<I> for Vec<T, A> {
+       // Check whether an index is 'in bounds' for a structure
+    #[predicate]
+    fn in_bounds(self, i: I) -> bool {
+        false
+    }
+
+    // Condition underwhich we get `out` from index `i` in `self`
+    #[predicate]
+    fn has_elem_at(self, i: I, out: Self::Output) -> bool {
+        true
+    }
+
+    // Explains what happens to the elements we didn't index
+    #[predicate]
+    fn resolve_except(&mut self, i: I) -> bool {
+        true
+    }
+}
+
 
 extern_spec! {
+    // #[requires(ix.in_bounds(@self_))]
+    // #[ensureS(ix.has_elem_at(@self, *result))]
+    // #[ensureS(ix.has_elem_at(@^self, ^result))]
+    // #[ensures(ix.resolve_except(@*self, @^self))]
+    // #[ensures((*self_).has_elem_at(ix, *result))]
+    // #[ensures((^self_).has_elem_at(ix, ^result))]
+    // #[ensures(self_.resolve_except(ix))]
     #[requires(self_.in_bounds(ix))]
-    #[ensures((*self_).has_elem_at(ix, *result))]
-    #[ensures((^self_).has_elem_at(ix, ^result))]
-    #[ensures(self_.resolve_except(ix))]
-    fn std::vec::Vec::index_mut<T, I : SeqIndex<T>, A : std::alloc::Allocator>(self_: &mut Vec<T, A>, ix: I) -> &mut <I as SliceIndex<[T]>>::Output
-        // where [T] : IndexMutSpec<I>
+    fn std::vec::Vec::index_mut<T, I : SeqIndex<Vec<T>, T>, A : std::alloc::Allocator>(self_: &mut Vec<T, A>, ix: I) -> &mut <Vec<T, A> as Index<I>>::Output
+        // where Vec<T, A> : IndexMut<I>
 }
 
 // TODO: Ensure extern functions & extern_specs inherit trait contracts

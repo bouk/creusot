@@ -67,6 +67,7 @@ impl<'tcx> FunctionTranslator<'_, '_, 'tcx> {
 
                 let (fun_def_id, subst) = func_defid(func).expect("expected call with function");
 
+                eprintln!("{:?} {:?} {:?} {:?}", func, self.def_id, fun_def_id, subst);
                 let predicates = self
                     .ctx
                     .extern_spec(fun_def_id)

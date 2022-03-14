@@ -93,7 +93,11 @@ impl ExternSpec<'tcx> {
         tcx: TyCtxt<'tcx>,
         sub: SubstsRef<'tcx>,
     ) -> Vec<Predicate<'tcx>> {
-        self.additional_predicates.iter().map(|p| p.subst(tcx, sub)).collect()
+        // let sub = sub.extend_to(tcx, def_id, mk_kind)
+        self.additional_predicates.iter().map(|p| {
+            p.subst(tcx, sub)
+
+        }).collect()
     }
 }
 
@@ -111,20 +115,27 @@ pub(crate) fn extract_extern_specs_from_item(
 
     let (id, subst) = visit.items.pop().unwrap();
 
+    eprintln!("{:?} {:?}", id, subst);
     let (id, subst) = resolve_opt(ctx.tcx, ctx.param_env(def_id), id, subst)
         .unwrap_or((id, subst)); // when not a trait function
+    eprintln!("resolve: {:?} {:?} {:?}", id, subst, resolve_opt(ctx.tcx, ctx.param_env(def_id), id, subst));
 
     // TODO: Enforce that the substitution is 1-1
     let inner_subst = InternalSubsts::identity_for_item(ctx.tcx, id);
     let outer_subst = InternalSubsts::identity_for_item(ctx.tcx, def_id.to_def_id());
-    // eprintln!("{:?} {:?} {:?} {:?} {:?}", id, re, subst, inner_subst, outer_subst);
+    // eprintln!("{:?} {:?} {:?} {:?}", id, subst, inner_subst, outer_subst);
+    use rustc_middle::ty::DefIdTree;
+    // eprintln!("{:?} {:?}", ctx.generics_of(id), ctx.parent(id).map(|id| ctx.generics_of(id)));
 
+    // eprintln!("{:?}", outer_subst);
     let inverse = InternalSubsts::for_item(ctx.tcx, def_id.to_def_id(), |arg, _| {
         // let param = outer_subst[arg.index as usize];
         // let ix = subst.iter().position(|e| e == param).unwrap();
-        inner_subst[arg.index as usize]
+        // inner_subst[arg.index as usize]
+        *inner_subst.get(arg.index as usize).unwrap_or_else(|| &outer_subst[arg.index as usize])
     });
-
+    eprintln!("inverse {:?}", inverse);
+    eprintln!("extern_spec_for: {:?}", id);
     let mut contract = crate::specification::contract_of(ctx, def_id.to_def_id()).unwrap();
     contract.func_id = id;
 
