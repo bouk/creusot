@@ -1,127 +1,127 @@
-extern crate creusot_contracts;
-use creusot_contracts::*;
-
-#[derive(Clone, Copy)]
-enum Color { Red, Black }
-
-struct Node<K,V> {
-  color: Color,
-  left: Tree<K,V>,
-  key: K,
-  val: V,
-  right: Tree<K,V>,
+enum Color {
+    Red,
+    Black,
 }
 
 impl Color {
-  fn flip(self) -> Self {
-    match self {
-      Color::Black => Color::Red,
-      Color::Red => Color::Black,
+    fn flip(self) -> Self {
+        match self {
+            Color::Black => Color::Red,
+            Color::Red => Color::Black,
+        }
     }
-  }
 }
 
-struct Tree<K, V>(Option<Box<Node<K, V>>>);
+struct Node<K, V> {
+    left: Tree<K, V>,
+    color: Color,
+    key: K,
+    val: V,
+    right: Tree<K, V>,
+}
 
-impl<K : Ord, V> Tree<K, V> {
-  fn rotate_left(&mut self) {
-    if let Some(node) = self.0 {
-      let right = std::mem::take(&mut node.right.0);
-      if let Some(right) = right {
-        std::mem::swap(&mut right.left, &mut node.right);
+struct Tree<K, V> {
+    node: Option<Box<Node<K, V>>>,
+}
 
-        std::mem::swap(self, &mut right.left);
-      }
+impl<K: Ord, V> Node<K, V> {
+    fn rotate_right(&mut self) {
+        //     self
+        //    /    \
+        //   x      c
+        //  / \
+        // a   b
+        // Rip out the left subtree
+        let mut x: Box<_> = match std::mem::take(&mut self.left.node) {
+            Some(x) => x,
+            None => return,
+        };
+        //     self
+        //         \
+        //   x      c
+        //  / \
+        // a   b
+        std::mem::swap(&mut self.left, &mut x.right);
+        //        self
+        //       /    \
+        //   x  b      c
+        //  /
+        // a
+        std::mem::swap(self, &mut x);
+        //   self
+        //  /
+        // a      x
+        //       / \
+        //      b   c
+        self.right = Tree { node: Some(x) };
+        //   self
+        //  /    \
+        // a      x
+        //       / \
+        //      b   c
     }
-  }
 
-  fn rotate_right(&mut self) {
-    if let Some(node) = self.0 {
-      let left = std::mem::take(&mut node.left.0);
-      if let Some(left) = left {
-        std::mem::swap(&mut left.right, &mut node.left);
-
-        std::mem::swap(self, &mut left.right);
-      }
-    }
-  }
-
-
-  fn get(&self, k: &K) -> Option<&V> {
-    let mut node = self;
-
-    while let Some(x) = node.0 {
-      match x.key.cmp(k) {
-        Ordering::Less => node = &x.left,
-        Ordering::Equal => return Some(&x.val),
-        Ordering::Greater => node = &x.right,
-      }
+    fn rotate_left(&mut self) {
+        let mut x: Box<_> = match std::mem::take(&mut self.right.node) {
+            Some(x) => x,
+            None => return,
+        };
+        std::mem::swap(&mut x.right, &mut self.left);
+        std::mem::swap(self, &mut x);
+        self.left = Tree { node: Some(x) };
     }
 
-    return None;
-  }
+    fn flip_colors(&mut self) {
+        self.color = self.color.flip();
 
-  // fn insert(&mut self, key: K, val: V) {
-  //   if let None = self {
-  //     *self = Some(Node {
-  //       color: Color::Red,
-  //       left: None,
-  //       key, val,
-  //       right: None
-  //     });
-  //     return
-  //   }
+        let left = self.left.unwrap_mut();
+        left.color = left.color.flip();
 
-  //   match key.cmp(self.key) {
-  //     Less => {
-  //     self.left.insert(key, val);
-  //     }
-  //     Equal => {self.val = val; }
-  //     Greater => {
-  //       self.left.insert(key, val);
-  //     }
-  //   }
+        let right = self.right.unwrap_mut();
+        right.color = right.color.flip();
+    }
+}
 
-  //   if self.right.is_red() && !self.left.is_red() {
-  //     self.rotate_left();
-  //   }
+impl<K: Ord, V> Tree<K, V> {
+    fn insert(&mut self, key: K, val: V) {
+        if let None = self.node {}
 
-  //   if self.left.is_red() && !self.left.unwrap().left.is_red() {
-  //     self.rotate_right();
-  //   }
+        use std::cmp::Ordering;
+        let node = self.unwrap_mut();
+        match key.cmp(&node.key) {
+            Ordering::Less => node.left.insert(key, val),
+            Ordering::Equal => node.val = val,
+            Ordering::Greater => node.left.insert(key, val),
+        }
 
-  //   if self.left.is_red() && self.right.is_red() {
-  //     self.flip_colors();
-  //   }
-  // }
+        if node.right.is_red() && !node.left.is_red() {
+            node.rotate_left();
+        }
 
-  // fn flip_colors(&mut self) {
-  //   self.color = self.color.flip();
+        if node.left.is_red() && !node.left.unwrap_mut().left.is_red() {
+            node.rotate_right();
+        }
 
-  //   let left = self.left.unwrap_mut();
-  //   *left.color = left.color.flip();
+        if node.left.is_red() && node.right.is_red() {
+            node.flip_colors();
+        }
+    }
 
-  //   let right = self.right.unwrap_mut();
-  //   *right.color = right.color.flip();
-  // }
+    fn unwrap_mut(&mut self) -> &mut Node<K, V> {
+        self.node.as_mut().unwrap()
+    }
 
-  // fn unwrap(&self) -> &Self {
-  //   self.0.as_ref().unwrap()
-  // }
+    fn is_red(&self) -> bool {
+        match self.node {
+            None => false,
+            Some(n) => matches!(n.color, Color::Red),
+        }
+    }
 
-  // fn unwrap_mut(&mut self) -> &mut Self {
-  //   self.0.as_ref().unwrap()
-  // }
-
-
-  // fn is_red(&self) -> bool {
-  //   // matches!(self.0, Some(Node { color: Color::Red, .. }))
-  //   false
-  // }
-
-  // fn is_black(&self) -> bool {
-  //   // matches!(self.0, Some(Node { color: Color::Black, .. }))
-  //   false
-  // }
-
+    fn is_black(&self) -> bool {
+        match self.node {
+            None => true,
+            Some(n) => matches!(n.color, Color::Black),
+        }
+    }
 }
