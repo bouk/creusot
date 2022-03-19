@@ -221,10 +221,8 @@ fn translate_ty_param(p: Symbol) -> Ident {
 // Results are accumulated and can be collected at once by consuming the `Ctx`
 pub fn translate_tydecl(ctx: &mut TranslationCtx<'_, '_>, span: Span, did: DefId) {
     // mark this type as translated
-    if ctx.translated_items.contains(&did) {
+    if !ctx.translated_items.insert(did) {
         return;
-    } else {
-        ctx.translated_items.insert(did);
     }
 
     // TODO: allow mutually recursive types
