@@ -12,7 +12,7 @@ trait Iterator: Sized {
     fn produces(self, visited: Seq<Self::Item>, _: Self) -> bool;
 
     #[law]
-    #[ensures(a.produces(Seq::empty(), a))]
+    #[ensures(a.produces(Seq::EMPTY, a))]
     fn produces_refl(a: Self);
 
     #[law]
@@ -26,7 +26,6 @@ trait Iterator: Sized {
       None => (^self).completed(),
       Some(v) => (*self).produces(Seq::singleton(v), ^self)
     })]
-    // #[ensures(self.descendent(^self))]
     fn next(&mut self) -> Option<Self::Item>;
 }
 
@@ -84,7 +83,7 @@ impl Iterator for Range {
     #[predicate]
     fn produces(self, visited: Seq<Self::Item>, o: Self) -> bool {
         pearlite! {
-            self.end === o.end
+            self.end === o.end && self.start <= o.start
             &&  visited.len() === @(o.start) - @(self.start)
             && forall<i : Int> 0 <= i && i < visited.len() ==>
                 @(visited[i]) === @self.start + i
@@ -92,7 +91,7 @@ impl Iterator for Range {
     }
 
     #[law]
-    #[ensures(a.produces(Seq::empty(), a))]
+    #[ensures(a.produces(Seq::EMPTY, a))]
     fn produces_refl(a: Self) {}
 
     #[law]
@@ -101,10 +100,10 @@ impl Iterator for Range {
     #[ensures(a.produces(ab.concat(bc), c))]
     fn produces_trans(a: Self, ab: Seq<Self::Item>, b: Self, bc: Seq<Self::Item>, c: Self) {}
 
-    #[requires(!(*self).completed())]
+    // #[requires(!(*self).completed())]
     #[ensures(match result {
-      None => (^self).completed(),
-      Some(v) => (*self).produces(Seq::singleton(v), ^self)
+      None => (^self).completed() && self.resolve(),
+      Some(v) => (*self).produces(Seq::singleton(v), ^self) && !(^self).completed()
     })]
     fn next(&mut self) -> Option<isize> {
         if self.start >= self.end {
@@ -142,7 +141,7 @@ impl<'a, T> Iterator for IterMut<'a, T> {
     }
 
     #[law]
-    #[ensures(a.produces(Seq::empty(), a))]
+    #[ensures(a.produces(Seq::EMPTY, a))]
     fn produces_refl(a: Self) {}
 
     #[law]
@@ -193,7 +192,7 @@ extern_spec! {
 // fn sum<I: Iterator<Item = u32>>(it: I) -> (u32, Ghost<I>, Ghost<Seq<i32>>) {
 //     let mut x = 0;
 //     let mut it_ghost = Ghost::record(&it);
-//     let mut seq_ghost = Ghost::record(&Seq::empty());
+//     let mut seq_ghost = Ghost::record(&Seq::EMPTY);
 //     // Can't use the for sugar as it requires std iterators
 //     #[invariant(xx, it_ghost.produces(@seq_ghost, it))]
 //     #[invariant(yy, x === seq_ghost.sum())]
@@ -204,6 +203,7 @@ extern_spec! {
 //     (x, Ghost::record(&i), seq_ghost)
 // }
 
+#[requires(@n >= 0)]
 #[ensures(result === n)]
 fn sum_range(n: isize) -> isize {
     let mut i = 0;
@@ -211,8 +211,10 @@ fn sum_range(n: isize) -> isize {
         // the for loop
         let mut it = Range { start: 0, end: n };
         let it_old = Ghost::record(&it);
-        let mut produced = Seq::empty();
+        let mut produced = Seq::EMPTY;
         #[invariant(free, (@it_old).produces(produced, it))]
+        // user invariant (should not mention it ideally but j)
+        #[invariant(user, @i === produced.len() && i <= n)]
         loop {
             match it.next() {
                 Some(j) => {

@@ -1,0 +1,68 @@
+use int.Int
+
+let x n =
+  diverges
+  requires { n >= 0 }
+  ensures { result = n }
+  let ref i = 0 in
+  let ref r = 0 in
+
+  while r < n do
+    invariant { i <= n }
+    invariant { i = r }
+    i <- i + 1;
+    r <- r + 1
+
+  done;
+  i
+
+use seq.Seq
+
+type option 'a = None | Some 'a
+
+let function fst p = let (a, b) = p in a
+let function snd p = let (a, b) = p in b
+
+
+type it = (int, int)
+predicate produces (p : it) (v : seq int) (p' : it) =
+  fst p <= fst p' && snd p = snd p' &&
+  Seq.length v = fst p' - fst p &&
+  (forall i. 0 <= i < Seq.length v -> v[i] = fst p + i)
+
+axiom produces_trans : forall a: it,ab : seq int, b : it, bc : seq int, c : it .
+  produces a ab b -> produces b bc c -> produces a (ab ++ bc) c
+
+use seq.FreeMonoid
+
+let iter_model n =
+  requires { n >= 0 }
+  ensures { result = n }
+  let ref i = 0 in
+
+
+  let ref it = (0, n) in
+  let ghost ref prod = Seq.empty in
+  label Entry in
+  while true do
+    variant { n - i }
+    invariant { produces (it at Entry) prod it }
+    invariant { i = Seq.length prod && i <= n }
+    label Next in
+    let next = if fst it >= snd it then None
+      else
+        let a = fst it in
+        it <- (fst it + 1, snd it);
+        assert { produces (it at Next) (Seq.singleton a) it };
+        Some a
+      in
+    match next with
+    | Some(v) ->
+        i <- i + 1;
+        prod <- Seq.snoc prod v;
+        ()
+    | None -> break
+    end
+  done;
+
+  i

@@ -74,18 +74,18 @@ module Iterator_Iterator_Produces
 end
 module Iterator_Iterator_ProducesRefl_Interface
   type self   
-  use seq_ext.SeqExt
+  use seq.Seq
   clone Iterator_Iterator_Item as Item0 with type self = self
   clone Iterator_Iterator_Produces_Interface as Produces0 with type self = self, type Item0.item = Item0.item
   function produces_refl (a : self) : ()
 end
 module Iterator_Iterator_ProducesRefl
   type self   
-  use seq_ext.SeqExt
+  use seq.Seq
   clone Iterator_Iterator_Item as Item0 with type self = self
   clone Iterator_Iterator_Produces_Interface as Produces0 with type self = self, type Item0.item = Item0.item
   function produces_refl (a : self) : ()
-  axiom produces_refl_spec : forall a : self . Produces0.produces a (SeqExt.empty ()) a
+  axiom produces_refl_spec : forall a : self . Produces0.produces a Seq.empty a
 end
 module Iterator_Iterator_ProducesTrans_Interface
   type self   
@@ -162,28 +162,28 @@ module Iterator_Impl0_Produces
   use mach.int.Int64
   use mach.int.Int32
   predicate produces (self : Type.iterator_range) (visited : Seq.seq isize) (o : Type.iterator_range) = 
-    Type.iterator_range_Range_end self = Type.iterator_range_Range_end o && Seq.length visited = Int64.to_int (Type.iterator_range_Range_start o) - Int64.to_int (Type.iterator_range_Range_start self) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Int64.to_int (Seq.get visited i) = Int64.to_int (Type.iterator_range_Range_start self) + i)
+    Type.iterator_range_Range_end self = Type.iterator_range_Range_end o && Type.iterator_range_Range_start self <= Type.iterator_range_Range_start o && Seq.length visited = Int64.to_int (Type.iterator_range_Range_start o) - Int64.to_int (Type.iterator_range_Range_start self) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Int64.to_int (Seq.get visited i) = Int64.to_int (Type.iterator_range_Range_start self) + i)
 end
 module Iterator_Impl0_ProducesRefl_Interface
-  use seq_ext.SeqExt
+  use seq.Seq
   use Type
   clone Iterator_Impl0_Produces_Interface as Produces0
   function produces_refl (a : Type.iterator_range) : ()
 end
 module Iterator_Impl0_ProducesRefl
-  use seq_ext.SeqExt
+  use seq.Seq
   use Type
   clone Iterator_Impl0_Produces_Interface as Produces0
   function produces_refl (a : Type.iterator_range) : () = 
     ()
-  axiom produces_refl_spec : forall a : Type.iterator_range . Produces0.produces a (SeqExt.empty ()) a
+  axiom produces_refl_spec : forall a : Type.iterator_range . Produces0.produces a Seq.empty a
 end
 module Iterator_Impl0_ProducesRefl_Impl
-  use seq_ext.SeqExt
+  use seq.Seq
   use Type
   clone Iterator_Impl0_Produces as Produces0
   let rec ghost function produces_refl (a : Type.iterator_range) : ()
-    ensures { Produces0.produces a (SeqExt.empty ()) a }
+    ensures { Produces0.produces a Seq.empty a }
     
    = 
     ()
@@ -226,15 +226,6 @@ module Iterator_Impl0_ProducesTrans_Impl
    = 
     ()
 end
-module CreusotContracts_Logic_Resolve_Impl2_Resolve_Interface
-  type t   
-  predicate resolve (self : t)
-end
-module CreusotContracts_Logic_Resolve_Impl2_Resolve
-  type t   
-  predicate resolve (self : t) = 
-    true
-end
 module CreusotContracts_Logic_Resolve_Impl1_Resolve_Interface
   type t   
   use prelude.Prelude
@@ -254,17 +245,26 @@ module CreusotContracts_Logic_Resolve_Resolve_Resolve
   type self   
   predicate resolve (self : self)
 end
-module CreusotContracts_Logic_Resolve_Impl2
-  type t   
-  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve0 with type t = t
-  clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = t,
-  predicate resolve = Resolve0.resolve
-end
 module CreusotContracts_Logic_Resolve_Impl1
   type t   
   use prelude.Prelude
   clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = t
   clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = borrowed t,
+  predicate resolve = Resolve0.resolve
+end
+module CreusotContracts_Logic_Resolve_Impl2_Resolve_Interface
+  type t   
+  predicate resolve (self : t)
+end
+module CreusotContracts_Logic_Resolve_Impl2_Resolve
+  type t   
+  predicate resolve (self : t) = 
+    true
+end
+module CreusotContracts_Logic_Resolve_Impl2
+  type t   
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve0 with type t = t
+  clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = t,
   predicate resolve = Resolve0.resolve
 end
 module Iterator_Impl0_Next_Interface
@@ -274,30 +274,30 @@ module Iterator_Impl0_Next_Interface
   use mach.int.Int64
   use seq.Seq
   clone Iterator_Impl0_Produces_Interface as Produces0
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve_Interface as Resolve0 with type t = Type.iterator_range
   clone Iterator_Impl0_Completed_Interface as Completed0
   val next [@cfg:stackify] (self : borrowed (Type.iterator_range)) : Type.core_option_option isize
-    requires {not (Completed0.completed ( * self))}
     ensures { match (result) with
-      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self)
-      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self)
+      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self) && Resolve0.resolve self
+      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not (Completed0.completed ( ^ self))
       end }
     
 end
 module Iterator_Impl0_Next
+  use seq.FreeMonoid
   use Type
   use mach.int.Int
   use prelude.Prelude
   use mach.int.Int64
   use seq.Seq
   clone Iterator_Impl0_Produces as Produces0
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = Type.iterator_range
   clone Iterator_Impl0_Completed as Completed0
-  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve1 with type t = Type.iterator_range
-  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve0 with type t = isize
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve1 with type t = isize
   let rec cfg next [@cfg:stackify] (self : borrowed (Type.iterator_range)) : Type.core_option_option isize
-    requires {not (Completed0.completed ( * self))}
     ensures { match (result) with
-      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self)
-      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self)
+      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self) && Resolve0.resolve self
+      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not (Completed0.completed ( * self))
       end }
     
    = 
@@ -313,9 +313,9 @@ module Iterator_Impl0_Next
     goto BB0
   }
   BB0 {
-    assume { Resolve0.resolve _3 };
+    assume { Resolve1.resolve _3 };
     _3 <- Type.iterator_range_Range_start ( * self_1);
-    assume { Resolve0.resolve _4 };
+    assume { Resolve1.resolve _4 };
     _4 <- Type.iterator_range_Range_end ( * self_1);
     _2 <- _3 >= _4;
     switch (_2)
@@ -324,18 +324,18 @@ module Iterator_Impl0_Next
       end
   }
   BB1 {
-    assume { Resolve1.resolve self_1 };
+    assume { Resolve0.resolve self_1 };
     _0 <- Type.Core_Option_Option_None;
     goto BB3
   }
   BB2 {
-    assume { Resolve0.resolve r_5 };
+    assume { Resolve1.resolve r_5 };
     r_5 <- Type.iterator_range_Range_start ( * self_1);
     self_1 <- { self_1 with current = (let Type.Iterator_Range a b =  * self_1 in Type.Iterator_Range (Type.iterator_range_Range_start ( * self_1) + (1 : isize)) b) };
-    assume { Resolve1.resolve self_1 };
-    assume { Resolve0.resolve _6 };
+    assume { Resolve0.resolve self_1 };
+    assume { Resolve1.resolve _6 };
     _6 <- r_5;
-    assume { Resolve0.resolve r_5 };
+    assume { Resolve1.resolve r_5 };
     _0 <- Type.Core_Option_Option_Some _6;
     goto BB3
   }
@@ -441,28 +441,28 @@ module CreusotContracts_Logic_Model_Impl2
 end
 module Iterator_Impl1_ProducesRefl_Interface
   type t   
-  use seq_ext.SeqExt
+  use seq.Seq
   use Type
   clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
   function produces_refl (a : Type.iterator_itermut t) : ()
 end
 module Iterator_Impl1_ProducesRefl
   type t   
-  use seq_ext.SeqExt
+  use seq.Seq
   use Type
   clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
   function produces_refl (a : Type.iterator_itermut t) : () = 
     ()
-  axiom produces_refl_spec : forall a : Type.iterator_itermut t . Produces0.produces a (SeqExt.empty ()) a
+  axiom produces_refl_spec : forall a : Type.iterator_itermut t . Produces0.produces a Seq.empty a
 end
 module Iterator_Impl1_ProducesRefl_Impl
   type t   
-  use seq_ext.SeqExt
+  use seq.Seq
   use Type
   clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
   clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model0.model
   let rec ghost function produces_refl (a : Type.iterator_itermut t) : ()
-    ensures { Produces0.produces a (SeqExt.empty ()) a }
+    ensures { Produces0.produces a Seq.empty a }
     
    = 
     ()
@@ -659,12 +659,13 @@ module Iterator_Impl0_Item
 end
 module Iterator_Impl0
   use Type
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = Type.iterator_range
   clone Iterator_Impl0_Produces as Produces0
   clone Iterator_Impl0_ProducesTrans as ProducesTrans0 with predicate Produces0.produces = Produces0.produces, axiom .
   clone Iterator_Impl0_ProducesRefl as ProducesRefl0 with predicate Produces0.produces = Produces0.produces, axiom .
   clone Iterator_Impl0_Completed as Completed0
   clone Iterator_Impl0_Next_Interface as Next0 with predicate Completed0.completed = Completed0.completed,
-  predicate Produces0.produces = Produces0.produces
+  predicate Resolve0.resolve = Resolve0.resolve, predicate Produces0.produces = Produces0.produces
   clone Iterator_Iterator_Completed as Completed1 with type self = Type.iterator_range,
   predicate completed = Completed0.completed
   clone Iterator_Impl0_Item as Item0
@@ -699,16 +700,6 @@ module CreusotContracts_Logic_Ghost_Impl1_Record
     ensures { Model0.model result = a }
     
 end
-module CreusotContracts_Logic_Seq_Impl1_Empty_Interface
-  type t   
-  use seq.Seq
-  function empty () : Seq.seq t
-end
-module CreusotContracts_Logic_Seq_Impl1_Empty
-  type t   
-  use seq.Seq
-  function empty () : Seq.seq t
-end
 module CreusotContracts_Logic_Seq_Impl1_Push_Interface
   type t   
   use seq.Seq
@@ -720,38 +711,42 @@ module CreusotContracts_Logic_Seq_Impl1_Push
   function push (self : Seq.seq t) (_2' : t) : Seq.seq t
 end
 module Iterator_SumRange_Interface
-  use mach.int.Int
-  use prelude.Prelude
   use mach.int.Int64
+  use mach.int.Int
+  use mach.int.Int32
+  use prelude.Prelude
   val sum_range [@cfg:stackify] (n : isize) : isize
+    requires {Int64.to_int n >= 0}
     ensures { result = n }
     
 end
 module Iterator_SumRange
+  use mach.int.Int64
+  use seq.Seq
   use mach.int.Int
   use prelude.Prelude
-  use mach.int.Int64
+  use mach.int.Int32
   use Type
   clone Iterator_Impl0_Produces as Produces0
   clone Iterator_Impl0_ProducesTrans as ProducesTrans0 with predicate Produces0.produces = Produces0.produces, axiom .
   clone Iterator_Impl0_ProducesRefl as ProducesRefl0 with predicate Produces0.produces = Produces0.produces, axiom .
   clone CreusotContracts_Logic_Ghost_Impl0_Model as Model0 with type t = Type.iterator_range
-  use seq.Seq
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve6 with type t = ()
   clone CreusotContracts_Logic_Seq_Impl1_Push as Push0 with type t = isize
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve5 with type t = Type.core_option_option isize
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve4 with type t = Seq.seq isize
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve3 with type t = Type.iterator_range
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve7 with type t = Type.iterator_range
   clone Iterator_Impl0_Completed as Completed0
-  clone CreusotContracts_Logic_Seq_Impl1_Empty as Empty0 with type t = isize
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve2 with type t = Type.creusotcontracts_logic_ghost_ghost (Type.iterator_range)
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve1 with type t = Type.iterator_range
   clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve0 with type t = isize
   clone Iterator_Impl0_Next_Interface as Next0 with predicate Completed0.completed = Completed0.completed,
-  predicate Produces0.produces = Produces0.produces
+  predicate Resolve0.resolve = Resolve7.resolve, predicate Produces0.produces = Produces0.produces
   clone CreusotContracts_Logic_Ghost_Impl1_Record_Interface as Record0 with type t = Type.iterator_range,
   function Model0.model = Model0.model
   let rec cfg sum_range [@cfg:stackify] (n : isize) : isize
+    requires {Int64.to_int n >= 0}
     ensures { result = n }
     
    = 
@@ -792,26 +787,24 @@ module Iterator_SumRange
   }
   BB1 {
     assume { Resolve2.resolve it_old_6 };
-    produced_9 <- Empty0.empty ();
+    produced_9 <- Seq.empty;
     goto BB2
   }
   BB2 {
-    goto BB3
-  }
-  BB3 {
     invariant free { Produces0.produces (Model0.model it_old_6) produced_9 it_4 };
+    invariant user { Int64.to_int i_2 = Seq.length produced_9 && i_2 <= n_1 };
     _12 <- borrow_mut it_4;
     it_4 <-  ^ _12;
     _11 <- Next0.next _12;
-    goto BB4
+    goto BB3
   }
-  BB4 {
+  BB3 {
     switch (_11)
-      | Type.Core_Option_Option_None -> goto BB5
-      | Type.Core_Option_Option_Some _ -> goto BB7
+      | Type.Core_Option_Option_None -> goto BB4
+      | Type.Core_Option_Option_Some _ -> goto BB6
       end
   }
-  BB5 {
+  BB4 {
     assume { Resolve3.resolve it_4 };
     assume { Resolve4.resolve produced_9 };
     assume { Resolve5.resolve _11 };
@@ -822,14 +815,14 @@ module Iterator_SumRange
     assume { Resolve0.resolve i_2 };
     return _0
   }
-  BB6 {
+  BB5 {
     assume { Resolve0.resolve i_2 };
     assume { Resolve3.resolve it_4 };
     assume { Resolve4.resolve produced_9 };
     assume { Resolve5.resolve _11 };
     absurd
   }
-  BB7 {
+  BB6 {
     assume { Resolve0.resolve j_14 };
     j_14 <- Type.core_option_option_Some_0 _11;
     assume { Resolve5.resolve _11 };
@@ -838,16 +831,16 @@ module Iterator_SumRange
     assume { Resolve0.resolve _17 };
     _17 <- j_14;
     assume { Resolve0.resolve j_14 };
-    _15 <- Push0.push _16 _17;
-    goto BB8
+    _15 <- Seq.snoc _16 _17;
+    goto BB7
   }
-  BB8 {
+  BB7 {
     assume { Resolve4.resolve produced_9 };
     produced_9 <- _15;
     i_2 <- i_2 + (1 : isize);
     _10 <- ();
     assume { Resolve6.resolve _10 };
-    goto BB3
+    goto BB2
   }
   
 end
