@@ -21,51 +21,50 @@ trait Iterator: Sized {
     #[ensures(a.produces(ab.concat(bc), c))]
     fn produces_trans(a: Self, ab: Seq<Self::Item>, b: Self, bc: Seq<Self::Item>, c: Self);
 
-    #[requires(!(*self).completed())]
     #[ensures(match result {
-      None => (^self).completed(),
-      Some(v) => (*self).produces(Seq::singleton(v), ^self)
+      None => (*self).completed(),
+      Some(v) => (*self).produces(Seq::singleton(v), ^self) && (*self).completed()
     })]
     fn next(&mut self) -> Option<Self::Item>;
 }
 
-// struct Map<I, F> {
-//     iter: I,
-//     func: F,
-// }
+struct Map<I, F> {
+    iter: I,
+    func: F,
+}
 
-// impl<I : Iterator, B, F: FnMut(I::Item) -> B> Iterator for Map<I, F> {
-//     type Item = B;
+impl<I : Iterator, B, F: FnMut(I::Item) -> B> Iterator for Map<I, F> {
+    type Item = B;
 
-//     #[predicate]
-//     fn completed(self) -> bool {
-//         self.iter.completed()
-//     }
+    #[predicate]
+    fn completed(self) -> bool {
+        self.iter.completed()
+    }
 
-//     #[predicate]
-//     fn produces(self, visited: Seq<Self::Item>, succ: Self) -> bool {
-//         pearlite! {
-//             exists<is : Seq<I::Item>, fs : Seq<&mut F>>
-//                    self.iter.produces(is, succ.iter )
-//                 && is.len() === fs.len()
-//                 && fs.len() === visited.len()
-//                 && (forall<i : Int> 1 <= i && i < fs.len() ==>  ^fs[i - 1] === * fs[i])
-//                 && (visited.len() > 0 ==> (
-//                         * fs[0] === self.func
-//                     &&  ^ fs[visited.len() - 1] === succ.func))
-//                 && forall<i : Int>
-//                     0 <= i && i < visited.len() ==>
-//                     fs[i].postcondition_mut(is[i], visited[i])
-//         }
-//     }
+    #[predicate]
+    fn produces(self, visited: Seq<Self::Item>, succ: Self) -> bool {
+        pearlite! {
+            exists<is : Seq<I::Item>, fs : Seq<&mut F>>
+                   self.iter.produces(is, succ.iter )
+                && is.len() === fs.len()
+                && fs.len() === visited.len()
+                && (forall<i : Int> 1 <= i && i < fs.len() ==>  ^fs[i - 1] === * fs[i])
+                && (visited.len() > 0 ==> (
+                        * fs[0] === self.func
+                    &&  ^ fs[visited.len() - 1] === succ.func))
+                && forall<i : Int>
+                    0 <= i && i < visited.len() ==>
+                    fs[i].postcondition_mut(is[i], visited[i])
+        }
+    }
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         match self.iter.next()  {
-//             Some(v) => self.func(v),
-//             None => None,
-//         }
-//     }
-// }
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter.next()  {
+            Some(v) => self.func(v),
+            None => None,
+        }
+    }
+}
 
 struct Range {
     start: isize,
@@ -213,7 +212,7 @@ fn sum_range(n: isize) -> isize {
         let it_old = Ghost::record(&it);
         let mut produced = Seq::EMPTY;
         #[invariant(free, (@it_old).produces(produced, it))]
-        // user invariant (should not mention it ideally but j)
+        // user invariant
         #[invariant(user, @i === produced.len() && i <= n)]
         loop {
             match it.next() {
