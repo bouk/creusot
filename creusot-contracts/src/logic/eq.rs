@@ -68,3 +68,31 @@ eq_logic_impl!(isize);
 eq_logic_impl!(i64);
 eq_logic_impl!(i32);
 eq_logic_impl!(bool);
+
+
+impl<T : EqLogic> EqLogic for Option<T> {
+    #[predicate]
+    fn log_eq(self, rhs: Self) -> bool {
+        pearlite!{match (self, rhs) {
+            (Some(x), Some(y)) => x == y,
+            (None, None) => true,
+            _ => false,
+        } }
+    }
+
+    #[predicate]
+    fn log_ne(self, rhs: Self) -> bool {
+        pearlite! { !(self == rhs) }
+    }
+    #[logic]
+    fn eq_ne(_: Self, _: Self) {}
+
+    #[logic]
+    fn refl(_: Self) {}
+
+    #[logic]
+    fn symmetry(_: Self, _: Self) {}
+
+    #[logic]
+    fn transitivity(_: Self, _: Self, _: Self) {}
+}

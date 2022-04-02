@@ -79,6 +79,12 @@ impl<T> Seq<T> {
     pub fn set(self, _: Int, _: T) -> Self {
         std::process::abort()
     }
+    #[trusted]
+    #[logic]
+    #[creusot::builtins = "seq.Seq.(++)"]
+    pub fn concat(self, _ : Self) -> Self {
+        std::process::abort()  
+    }
 
     #[trusted]
     #[logic]
