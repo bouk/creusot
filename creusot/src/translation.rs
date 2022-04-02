@@ -104,7 +104,7 @@ pub fn translate(tcx: TyCtxt, opts: &Options) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn binop_to_binop(op: rustc_middle::mir::BinOp) -> why3::mlcfg::BinOp {
+pub fn binop_to_binop(op: rustc_middle::mir::BinOp, span: rustc_span::Span) -> why3::mlcfg::BinOp {
     use rustc_middle::mir;
     use why3::mlcfg::BinOp;
     match op {
@@ -119,7 +119,7 @@ pub fn binop_to_binop(op: rustc_middle::mir::BinOp) -> why3::mlcfg::BinOp {
         mir::BinOp::Ge => BinOp::Ge,
         mir::BinOp::Ne => BinOp::Ne,
         mir::BinOp::Rem => BinOp::Mod,
-        _ => unimplemented!("unsupported binary operation: {:?}", op),
+        _ => unimplemented!("unsupported binary operation: {:?} {:?}", op, span),
     }
 }
 

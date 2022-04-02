@@ -57,6 +57,27 @@ impl Model for i32 {
     }
 }
 
+
+impl From<i64> for Int {
+    #[logic]
+    #[trusted]
+    #[rustc_diagnostic_item = "i64_to_int"]
+    #[creusot::builtins = "mach.int.Int32.to_int"]
+    fn from(_: i64) -> Self {
+        std::process::abort()
+    }
+}
+impl Model for i64 {
+    type ModelTy = Int;
+    #[logic]
+    #[rustc_diagnostic_item = "i64_model"]
+    #[creusot::builtins = "mach.int.Int64.to_int"]
+    fn model(self) -> Self::ModelTy {
+        Int::from(self)
+    }
+}
+
+
 impl From<usize> for Int {
     #[logic]
     #[trusted]
