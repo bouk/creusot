@@ -1,6 +1,7 @@
 #![feature(slice_take)]
 extern crate creusot_contracts;
 use creusot_contracts::*;
+use creusot_contracts::std::*;
 
 trait Iterator: Sized {
     type Item;
@@ -23,7 +24,7 @@ trait Iterator: Sized {
 
     #[ensures(match result {
       None => (*self).completed(),
-      Some(v) => (*self).produces(Seq::singleton(v), ^self) && (*self).completed()
+      Some(v) => (*self).produces(Seq::singleton(v), ^self) && !(*self).completed()
     })]
     fn next(&mut self) -> Option<Self::Item>;
 }
@@ -33,38 +34,38 @@ struct Map<I, F> {
     func: F,
 }
 
-impl<I : Iterator, B, F: FnMut(I::Item) -> B> Iterator for Map<I, F> {
-    type Item = B;
+// impl<I : Iterator, B, F: FnMut(I::Item) -> B> Iterator for Map<I, F> {
+//     type Item = B;
 
-    #[predicate]
-    fn completed(self) -> bool {
-        self.iter.completed()
-    }
+//     #[predicate]
+//     fn completed(self) -> bool {
+//         self.iter.completed()
+//     }
 
-    #[predicate]
-    fn produces(self, visited: Seq<Self::Item>, succ: Self) -> bool {
-        pearlite! {
-            exists<is : Seq<I::Item>, fs : Seq<&mut F>>
-                   self.iter.produces(is, succ.iter )
-                && is.len() === fs.len()
-                && fs.len() === visited.len()
-                && (forall<i : Int> 1 <= i && i < fs.len() ==>  ^fs[i - 1] === * fs[i])
-                && (visited.len() > 0 ==> (
-                        * fs[0] === self.func
-                    &&  ^ fs[visited.len() - 1] === succ.func))
-                && forall<i : Int>
-                    0 <= i && i < visited.len() ==>
-                    fs[i].postcondition_mut(is[i], visited[i])
-        }
-    }
+//     #[predicate]
+//     fn produces(self, visited: Seq<Self::Item>, succ: Self) -> bool {
+//         pearlite! {
+//             exists<is : Seq<I::Item>, fs : Seq<&mut F>>
+//                    self.iter.produces(is, succ.iter )
+//                 && is.len() === fs.len()
+//                 && fs.len() === visited.len()
+//                 && (forall<i : Int> 1 <= i && i < fs.len() ==>  ^fs[i - 1] === * fs[i])
+//                 && (visited.len() > 0 ==> (
+//                         * fs[0] === self.func
+//                     &&  ^ fs[visited.len() - 1] === succ.func))
+//                 && forall<i : Int>
+//                     0 <= i && i < visited.len() ==>
+//                     fs[i].postcondition_mut(is[i], visited[i])
+//         }
+//     }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.iter.next()  {
-            Some(v) => self.func(v),
-            None => None,
-        }
-    }
-}
+//     fn next(&mut self) -> Option<Self::Item> {
+//         match self.iter.next()  {
+//             Some(v) => self.func(v),
+//             None => None,
+//         }
+//     }
+// }
 
 struct Range {
     start: isize,
@@ -102,7 +103,7 @@ impl Iterator for Range {
     // #[requires(!(*self).completed())]
     #[ensures(match result {
       None => (^self).completed() && self.resolve(),
-      Some(v) => (*self).produces(Seq::singleton(v), ^self) && !(^self).completed()
+      Some(v) => (*self).produces(Seq::singleton(v), ^self) && !(*self).completed()
     })]
     fn next(&mut self) -> Option<isize> {
         if self.start >= self.end {
@@ -150,7 +151,6 @@ impl<'a, T> Iterator for IterMut<'a, T> {
     fn produces_trans(a: Self, ab: Seq<Self::Item>, b: Self, bc: Seq<Self::Item>, c: Self) {}
 
     // #[requires((@*(*self).inner).len() === (@^(*self).inner).len())]
-    #[requires(!(*self).completed())]
     #[ensures(match result {
       None => (^self).completed(),
       Some(v) => (*self).produces(Seq::singleton(v), ^self)
@@ -201,6 +201,29 @@ extern_spec! {
 //     }
 //     (x, Ghost::record(&i), seq_ghost)
 // }
+
+#[trusted]
+#[ensures(@*result.inner === @*v)]
+#[ensures(@^result.inner === @^v)]
+fn iter_mut<'a, T>(v: &'a mut Vec<T>) -> IterMut<'a, T> {
+    panic!()
+}
+
+fn all_zero(v : &mut Vec<usize>) {
+    let mut it = iter_mut(v);
+    let it_old = Ghost::record(&it);
+    let mut produced = Seq::EMPTY;
+    #[invariant(structural, (@it_old).produces(produced, it))]
+    loop {
+        match it.next() {
+            Some(x) => {
+                // produced = produced.push(x);
+                *x = 0;
+            }
+            None => break,
+        }
+    }
+}
 
 #[requires(@n >= 0)]
 #[ensures(result === n)]

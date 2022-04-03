@@ -23,6 +23,18 @@ module Type
     ensures { result = core_option_option_Some_0 self }
     
   axiom core_option_option_Some_0_acc : forall a : 't . core_option_option_Some_0 (Core_Option_Option_Some a : core_option_option 't) = a
+  type creusotcontracts_std1_vec_vec 't
+  type creusotcontracts_logic_ghost_ghost 't =
+    | CreusotContracts_Logic_Ghost_Ghost opaque_ptr
+
+  type iterator_itermut 't =
+    | Iterator_IterMut (borrowed (seq 't))
+
+  function iterator_itermut_IterMut_inner (self : iterator_itermut 't) : borrowed (seq 't)
+  val iterator_itermut_IterMut_inner (self : iterator_itermut 't) : borrowed (seq 't)
+    ensures { result = iterator_itermut_IterMut_inner self }
+
+  axiom iterator_itermut_IterMut_inner_acc : forall a : borrowed (seq 't) . iterator_itermut_IterMut_inner (Iterator_IterMut a : iterator_itermut 't) = a
   type iterator_range  = 
     | Iterator_Range isize isize
     
@@ -36,17 +48,6 @@ module Type
     ensures { result = iterator_range_Range_end self }
     
   axiom iterator_range_Range_end_acc : forall a : isize, b : isize . iterator_range_Range_end (Iterator_Range a b : iterator_range) = b
-  type iterator_itermut 't = 
-    | Iterator_IterMut (borrowed (seq 't))
-    
-  function iterator_itermut_IterMut_inner (self : iterator_itermut 't) : borrowed (seq 't)
-  val iterator_itermut_IterMut_inner (self : iterator_itermut 't) : borrowed (seq 't)
-    ensures { result = iterator_itermut_IterMut_inner self }
-    
-  axiom iterator_itermut_IterMut_inner_acc : forall a : borrowed (seq 't) . iterator_itermut_IterMut_inner (Iterator_IterMut a : iterator_itermut 't) = a
-  type creusotcontracts_logic_ghost_ghost 't = 
-    | CreusotContracts_Logic_Ghost_Ghost opaque_ptr
-    
 end
 module Iterator_Iterator_Item
   type self   
@@ -107,14 +108,13 @@ module Iterator_Iterator_Next_Interface
   use Type
   use seq.Seq
   use prelude.Prelude
+  clone Iterator_Iterator_Completed_Interface as Completed0 with type self = self
   clone Iterator_Iterator_Item as Item0 with type self = self
   clone Iterator_Iterator_Produces_Interface as Produces0 with type self = self, type Item0.item = Item0.item
-  clone Iterator_Iterator_Completed_Interface as Completed0 with type self = self
   val next [@cfg:stackify] (self : borrowed self) : Type.core_option_option Item0.item
-    requires {not (Completed0.completed ( * self))}
     ensures { match (result) with
-      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self)
-      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self)
+      | Type.Core_Option_Option_None -> Completed0.completed ( * self)
+      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not Completed0.completed ( * self)
       end }
     
 end
@@ -123,16 +123,589 @@ module Iterator_Iterator_Next
   use Type
   use seq.Seq
   use prelude.Prelude
+  clone Iterator_Iterator_Completed as Completed0 with type self = self
   clone Iterator_Iterator_Item as Item0 with type self = self
   clone Iterator_Iterator_Produces as Produces0 with type self = self, type Item0.item = Item0.item
-  clone Iterator_Iterator_Completed as Completed0 with type self = self
   val next [@cfg:stackify] (self : borrowed self) : Type.core_option_option Item0.item
+    ensures { match (result) with
+      | Type.Core_Option_Option_None -> Completed0.completed ( * self)
+      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not Completed0.completed ( * self)
+      end }
+    
+end
+module CreusotContracts_Logic_Ghost_Impl0_Model_Interface
+  type t
+  use Type
+  function model (self : Type.creusotcontracts_logic_ghost_ghost t) : t
+end
+module CreusotContracts_Logic_Ghost_Impl0_Model
+  type t
+  use Type
+  function model (self : Type.creusotcontracts_logic_ghost_ghost t) : t
+end
+module CreusotContracts_Logic_Model_Impl2_Model_Interface
+  type t
+  use prelude.Prelude
+  use seq.Seq
+  function model (self : seq t) : Seq.seq t
+end
+module CreusotContracts_Logic_Model_Impl2_Model
+  type t
+  use prelude.Prelude
+  use seq.Seq
+  function model (self : seq t) : Seq.seq t =
+    Prelude.id self
+end
+module Iterator_Impl1_Produces_Interface
+  type t
+  use Type
+  use seq.Seq
+  use prelude.Prelude
+  predicate produces (self : Type.iterator_itermut t) (visited : Seq.seq (borrowed t)) (tl : Type.iterator_itermut t)
+end
+module Iterator_Impl1_Produces
+  type t
+  use Type
+  use seq.Seq
+  use prelude.Prelude
+  use mach.int.Int
+  use seq_ext.SeqExt
+  use mach.int.Int32
+  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
+  predicate produces (self : Type.iterator_itermut t) (visited : Seq.seq (borrowed t)) (tl : Type.iterator_itermut t) =
+    Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (=) (SeqExt.subsequence (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && (=) (SeqExt.subsequence (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Seq.get (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) i =  * Seq.get visited i && Seq.get (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) i =  ^ Seq.get visited i)
+end
+module CreusotContracts_Logic_Model_Model_ModelTy
+  type self
+  type modelTy
+end
+module CreusotContracts_Logic_Model_Model_Model_Interface
+  type self
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = self
+  function model (self : self) : ModelTy0.modelTy
+end
+module CreusotContracts_Logic_Model_Model_Model
+  type self
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = self
+  function model (self : self) : ModelTy0.modelTy
+end
+module CreusotContracts_Logic_Ghost_Impl0_ModelTy
+  type t
+  type modelTy  =
+    t
+end
+module CreusotContracts_Logic_Ghost_Impl0
+  type t
+  use Type
+  clone CreusotContracts_Logic_Ghost_Impl0_Model as Model0 with type t = t
+  clone CreusotContracts_Logic_Ghost_Impl0_ModelTy as ModelTy0 with type t = t
+  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = Type.creusotcontracts_logic_ghost_ghost t,
+  function model = Model0.model, type ModelTy0.modelTy = ModelTy0.modelTy
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = Type.creusotcontracts_logic_ghost_ghost t,
+  type modelTy = ModelTy0.modelTy
+end
+module Iterator_Impl1_Item
+  type t
+  use prelude.Prelude
+  type item  =
+    borrowed t
+end
+module CreusotContracts_Logic_Model_Impl1_Model_Interface
+  type t
+  use prelude.Prelude
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t
+  function model (self : borrowed t) : ModelTy0.modelTy
+end
+module CreusotContracts_Logic_Model_Impl1_Model
+  type t
+  use prelude.Prelude
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t
+  clone CreusotContracts_Logic_Model_Model_Model_Interface as Model0 with type self = t,
+  type ModelTy0.modelTy = ModelTy0.modelTy
+  function model (self : borrowed t) : ModelTy0.modelTy =
+    Model0.model ( * self)
+end
+module CreusotContracts_Logic_Model_Impl2_ModelTy
+  type t
+  use seq.Seq
+  type modelTy  =
+    Seq.seq t
+end
+module Iterator_Impl1_Completed_Interface
+  type t
+  use Type
+  predicate completed (self : Type.iterator_itermut t)
+end
+module Iterator_Impl1_Completed
+  type t
+  use Type
+  use seq.Seq
+  use mach.int.Int
+  use mach.int.Int32
+  use prelude.Prelude
+  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
+  clone CreusotContracts_Logic_Model_Impl1_Model_Interface as Model0 with type t = seq t,
+  type ModelTy0.modelTy = ModelTy0.modelTy
+  predicate completed (self : Type.iterator_itermut t) =
+    Seq.length (Model0.model (Type.iterator_itermut_IterMut_inner self)) = 0
+end
+module CreusotContracts_Logic_Model_Impl2
+  type t
+  use prelude.Prelude
+  use seq.Seq
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
+  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
+  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = seq t, function model = Model0.model,
+  type ModelTy0.modelTy = ModelTy0.modelTy
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = seq t, type modelTy = ModelTy0.modelTy
+end
+module Iterator_Impl1_ProducesRefl_Interface
+  type t
+  use seq.Seq
+  use Type
+  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
+  function produces_refl (a : Type.iterator_itermut t) : ()
+end
+module Iterator_Impl1_ProducesRefl
+  type t
+  use seq.Seq
+  use Type
+  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
+  function produces_refl (a : Type.iterator_itermut t) : () =
+    ()
+  axiom produces_refl_spec : forall a : Type.iterator_itermut t . Produces0.produces a Seq.empty a
+end
+module Iterator_Impl1_ProducesRefl_Impl
+  type t
+  use seq.Seq
+  use Type
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
+  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model0.model
+  let rec ghost function produces_refl (a : Type.iterator_itermut t) : ()
+    ensures { Produces0.produces a Seq.empty a }
+    
+   = 
+    ()
+end
+module Iterator_Impl1_ProducesTrans_Interface
+  type t
+  use seq.Seq
+  use Type
+  use prelude.Prelude
+  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
+  function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
+    
+end
+module Iterator_Impl1_ProducesTrans
+  type t
+  use seq.Seq
+  use Type
+  use prelude.Prelude
+  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
+  function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
+    
+   = 
+    ()
+  axiom produces_trans_spec : forall a : Type.iterator_itermut t, ab : Seq.seq (borrowed t), b : Type.iterator_itermut t, bc : Seq.seq (borrowed t), c : Type.iterator_itermut t . Produces0.produces b bc c -> Produces0.produces a ab b -> Produces0.produces a (Seq.(++) ab bc) c
+end
+module Iterator_Impl1_ProducesTrans_Impl
+  type t
+  use seq.Seq
+  use Type
+  use prelude.Prelude
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
+  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model0.model
+
+  use seq.FreeMonoid
+  use seq.ToList
+  use seq.OfList
+  let rec ghost function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
+    requires {Produces0.produces b bc c}
+    requires {Produces0.produces a ab b}
+    ensures { Produces0.produces a (Seq.(++) ab bc) c }
+    
+   = 
+    ()
+end
+module CreusotContracts_Logic_Model_Impl1_ModelTy
+  type t
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t
+  type modelTy  =
+    ModelTy0.modelTy
+end
+module CreusotContracts_Logic_Model_Impl1
+  type t
+  use prelude.Prelude
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy2 with type self = t
+  clone CreusotContracts_Logic_Model_Model_Model as Model2 with type self = t, type ModelTy0.modelTy = ModelTy2.modelTy
+  clone CreusotContracts_Logic_Model_Impl1_Model as Model0 with type t = t, type ModelTy0.modelTy = ModelTy2.modelTy,
+  function Model0.model = Model2.model
+  clone CreusotContracts_Logic_Model_Impl1_ModelTy as ModelTy0 with type t = t, type ModelTy0.modelTy = ModelTy2.modelTy
+  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = borrowed t, function model = Model0.model,
+  type ModelTy0.modelTy = ModelTy0.modelTy
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = borrowed t,
+  type modelTy = ModelTy0.modelTy
+end
+module CreusotContracts_Logic_Seq_Impl1_Tail_Interface
+  type t
+  use seq.Seq
+  function tail (self : Seq.seq t) : Seq.seq t
+end
+module CreusotContracts_Logic_Seq_Impl1_Tail
+  type t
+  use seq.Seq
+  use mach.int.Int
+  use mach.int.Int32
+  use seq_ext.SeqExt
+  function tail (self : Seq.seq t) : Seq.seq t =
+    SeqExt.subsequence self 1 (Seq.length self)
+end
+module Core_Slice_Impl0_TakeFirstMut_Interface
+  type t
+  use Type
+  use prelude.Prelude
+  use mach.int.Int
+  use mach.int.Int32
+  use seq.Seq
+  clone CreusotContracts_Logic_Seq_Impl1_Tail_Interface as Tail0 with type t = t
+  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
+  val take_first_mut [@cfg:stackify] (self : borrowed (borrowed (seq t))) : Type.core_option_option (borrowed t)
+    ensures { match (result) with
+      | Type.Core_Option_Option_Some r ->  * r = Seq.get (Model0.model ( *  * self)) 0 &&  ^ r = Seq.get (Model0.model ( ^  * self)) 0 && Seq.length (Model0.model ( *  * self)) > 0 && Seq.length (Model0.model ( ^  * self)) > 0 && Model0.model ( *  ^ self) = Tail0.tail (Model0.model ( *  * self)) && Model0.model ( ^  ^ self) = Tail0.tail (Model0.model ( ^  * self))
+      | Type.Core_Option_Option_None ->  ^ self =  * self && Seq.length (Model0.model ( *  * self)) = 0
+      end }
+
+end
+module Core_Slice_Impl0_TakeFirstMut
+  type t
+  use Type
+  use prelude.Prelude
+  use mach.int.Int
+  use mach.int.Int32
+  use seq.Seq
+  clone CreusotContracts_Logic_Seq_Impl1_Tail_Interface as Tail0 with type t = t
+  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
+  val take_first_mut [@cfg:stackify] (self : borrowed (borrowed (seq t))) : Type.core_option_option (borrowed t)
+    ensures { match (result) with
+      | Type.Core_Option_Option_Some r ->  * r = Seq.get (Model0.model ( *  * self)) 0 &&  ^ r = Seq.get (Model0.model ( ^  * self)) 0 && Seq.length (Model0.model ( *  * self)) > 0 && Seq.length (Model0.model ( ^  * self)) > 0 && Model0.model ( *  ^ self) = Tail0.tail (Model0.model ( *  * self)) && Model0.model ( ^  ^ self) = Tail0.tail (Model0.model ( ^  * self))
+      | Type.Core_Option_Option_None ->  ^ self =  * self && Seq.length (Model0.model ( *  * self)) = 0
+      end }
+
+end
+module CreusotContracts_Logic_Resolve_Impl1_Resolve_Interface
+  type t   
+  use prelude.Prelude
+  predicate resolve (self : borrowed t)
+end
+module CreusotContracts_Logic_Resolve_Impl1_Resolve
+  type t   
+  use prelude.Prelude
+  predicate resolve (self : borrowed t) =
+     ^ self =  * self
+end
+module CreusotContracts_Logic_Resolve_Resolve_Resolve_Interface
+  type self
+  predicate resolve (self : self)
+end
+module CreusotContracts_Logic_Resolve_Resolve_Resolve
+  type self
+  predicate resolve (self : self)
+end
+module CreusotContracts_Logic_Resolve_Impl1
+  type t
+  use prelude.Prelude
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = t
+  clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = borrowed t,
+  predicate resolve = Resolve0.resolve
+end
+module Iterator_Impl1_Next_Interface
+  type t
+  use Type
+  use prelude.Prelude
+  use seq.Seq
+  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
+  clone Iterator_Impl1_Completed_Interface as Completed0 with type t = t
+  val next [@cfg:stackify] (self : borrowed (Type.iterator_itermut t)) : Type.core_option_option (borrowed t)
+    ensures { match (result) with
+      | Type.Core_Option_Option_None -> Completed0.completed ( *self)
+      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not (Completed0.completed ( * self))
+      end }
+    
+end
+module Iterator_Impl1_Next
+  type t
+  use Type
+  use prelude.Prelude
+  use seq.Seq
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model1 with type t = t
+  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model1.model
+  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
+  clone CreusotContracts_Logic_Model_Impl1_Model as Model0 with type t = seq t,
+  type ModelTy0.modelTy = ModelTy0.modelTy, function Model0.model = Model1.model
+  clone Iterator_Impl1_Completed as Completed0 with type t = t, function Model0.model = Model0.model
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = Type.iterator_itermut t
+  clone CreusotContracts_Logic_Seq_Impl1_Tail as Tail0 with type t = t
+  clone Core_Slice_Impl0_TakeFirstMut_Interface as TakeFirstMut0 with type t = t, function Model0.model = Model1.model,
+  function Tail0.tail = Tail0.tail
+  let rec cfg next [@cfg:stackify] (self : borrowed (Type.iterator_itermut t)) : Type.core_option_option (borrowed t)
     requires {not (Completed0.completed ( * self))}
     ensures { match (result) with
       | Type.Core_Option_Option_None -> Completed0.completed ( ^ self)
       | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self)
       end }
     
+   = 
+  var _0 : Type.core_option_option (borrowed t);
+  var self_1 : borrowed (Type.iterator_itermut t);
+  var _2 : borrowed (borrowed (seq t));
+  {
+    self_1 <- self;
+    goto BB0
+  }
+  BB0 {
+    _2 <- borrow_mut (Type.iterator_itermut_IterMut_inner ( * self_1));
+    self_1 <- { self_1 with current = (let Type.Iterator_IterMut a =  * self_1 in Type.Iterator_IterMut ( ^ _2)) };
+    _0 <- TakeFirstMut0.take_first_mut _2;
+    goto BB1
+  }
+  BB1 {
+    assume { Resolve0.resolve self_1 };
+    return _0
+  }
+  
+end
+module Iterator_Impl1
+  type t
+  use prelude.Prelude
+  use seq.Seq
+  use Type
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model1 with type t = t
+  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model1.model
+  clone Iterator_Impl1_ProducesTrans as ProducesTrans0 with type t = t,
+  predicate Produces0.produces = Produces0.produces, axiom .
+  clone Iterator_Impl1_ProducesRefl as ProducesRefl0 with type t = t, predicate Produces0.produces = Produces0.produces,
+  axiom .
+  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
+  clone CreusotContracts_Logic_Model_Impl1_Model as Model0 with type t = seq t,
+  type ModelTy0.modelTy = ModelTy0.modelTy, function Model0.model = Model1.model
+  clone Iterator_Impl1_Completed as Completed0 with type t = t, function Model0.model = Model0.model
+  clone Iterator_Impl1_Next_Interface as Next0 with type t = t, predicate Completed0.completed = Completed0.completed,
+  predicate Produces0.produces = Produces0.produces
+  clone Iterator_Iterator_Completed as Completed1 with type self = Type.iterator_itermut t,
+  predicate completed = Completed0.completed
+  clone Iterator_Impl1_Item as Item0 with type t = t
+  clone Iterator_Iterator_Next_Interface as Next1 with type self = Type.iterator_itermut t, val next = Next0.next,
+  type Item0.item = Item0.item, predicate Completed0.completed = Completed0.completed,
+  predicate Produces0.produces = Produces0.produces
+  clone Iterator_Iterator_ProducesTrans as ProducesTrans1 with type self = Type.iterator_itermut t,
+  function produces_trans = ProducesTrans0.produces_trans, predicate Produces0.produces = Produces0.produces,
+  type Item0.item = Item0.item, axiom .
+  clone Iterator_Iterator_ProducesRefl as ProducesRefl1 with type self = Type.iterator_itermut t,
+  function produces_refl = ProducesRefl0.produces_refl, predicate Produces0.produces = Produces0.produces,
+  type Item0.item = Item0.item, axiom .
+  clone Iterator_Iterator_Produces as Produces1 with type self = Type.iterator_itermut t,
+  predicate produces = Produces0.produces, type Item0.item = Item0.item
+  clone Iterator_Iterator_Item as Item1 with type self = Type.iterator_itermut t, type item = Item0.item
+end
+module CreusotContracts_Std1_Vec_Impl0_Model_Interface
+  type t
+  use Type
+  use seq.Seq
+  function model (self : Type.creusotcontracts_std1_vec_vec t) : Seq.seq t
+end
+module CreusotContracts_Std1_Vec_Impl0_Model
+  type t
+  use Type
+  use seq.Seq
+  function model (self : Type.creusotcontracts_std1_vec_vec t) : Seq.seq t
+end
+module Iterator_IterMut_Interface
+  type t   
+  use prelude.Prelude
+  use Type
+  clone CreusotContracts_Std1_Vec_Impl0_Model_Interface as Model1 with type t = t
+  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
+  val iter_mut [@cfg:stackify] (v : borrowed (Type.creusotcontracts_std1_vec_vec t)) : Type.iterator_itermut t
+    ensures { Model0.model ( ^ Type.iterator_itermut_IterMut_inner result) = Model1.model ( ^ v) }
+    ensures { Model0.model ( * Type.iterator_itermut_IterMut_inner result) = Model1.model ( * v) }
+
+end
+module Iterator_IterMut
+  type t   
+  use prelude.Prelude
+  use Type
+  clone CreusotContracts_Std1_Vec_Impl0_Model as Model1 with type t = t
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
+  val iter_mut [@cfg:stackify] (v : borrowed (Type.creusotcontracts_std1_vec_vec t)) : Type.iterator_itermut t
+    ensures { Model0.model ( ^ Type.iterator_itermut_IterMut_inner result) = Model1.model ( ^ v) }
+    ensures { Model0.model ( * Type.iterator_itermut_IterMut_inner result) = Model1.model ( * v) }
+
+end
+module CreusotContracts_Logic_Resolve_Impl2_Resolve_Interface
+  type t
+  predicate resolve (self : t)
+end
+module CreusotContracts_Logic_Resolve_Impl2_Resolve
+  type t
+  predicate resolve (self : t) =
+    true
+end
+module CreusotContracts_Logic_Ghost_Impl1_Record_Interface
+  type t
+  use prelude.Prelude
+  use Type
+  clone CreusotContracts_Logic_Ghost_Impl0_Model_Interface as Model0 with type t = t
+  val record [@cfg:stackify] (a : t) : Type.creusotcontracts_logic_ghost_ghost t
+    ensures { Model0.model result = a }
+
+end
+module CreusotContracts_Logic_Ghost_Impl1_Record
+  type t
+  use prelude.Prelude
+  use Type
+  clone CreusotContracts_Logic_Ghost_Impl0_Model_Interface as Model0 with type t = t
+  val record [@cfg:stackify] (a : t) : Type.creusotcontracts_logic_ghost_ghost t
+    ensures { Model0.model result = a }
+
+end
+module CreusotContracts_Logic_Resolve_Impl2
+  type t
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve0 with type t = t
+  clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = t,
+  predicate resolve = Resolve0.resolve
+end
+module CreusotContracts_Std1_Vec_Impl0_ModelTy
+  type t   
+  use seq.Seq
+  type modelTy  = 
+    Seq.seq t
+end
+module CreusotContracts_Std1_Vec_Impl0
+  type t   
+  use Type
+  clone CreusotContracts_Std1_Vec_Impl0_Model as Model0 with type t = t
+  clone CreusotContracts_Std1_Vec_Impl0_ModelTy as ModelTy0 with type t = t
+  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = Type.creusotcontracts_std1_vec_vec t,
+  function model = Model0.model, type ModelTy0.modelTy = ModelTy0.modelTy
+  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = Type.creusotcontracts_std1_vec_vec t,
+  type modelTy = ModelTy0.modelTy
+end
+module Iterator_AllZero_Interface
+  use prelude.Prelude
+  use Type
+  use mach.int.Int
+  use mach.int.UInt64
+  val all_zero [@cfg:stackify] (v : borrowed (Type.creusotcontracts_std1_vec_vec usize)) : ()
+end
+module Iterator_AllZero
+  use prelude.Prelude
+  use Type
+  use mach.int.Int
+  use mach.int.UInt64
+  clone CreusotContracts_Logic_Model_Impl2_Model as Model1 with type t = usize
+  clone Iterator_Impl1_Produces as Produces0 with type t = usize, function Model0.model = Model1.model
+  clone Iterator_Impl1_ProducesTrans as ProducesTrans0 with type t = usize,
+  predicate Produces0.produces = Produces0.produces, axiom .
+  clone Iterator_Impl1_ProducesRefl as ProducesRefl0 with type t = usize,
+  predicate Produces0.produces = Produces0.produces, axiom .
+  clone CreusotContracts_Logic_Ghost_Impl0_Model as Model0 with type t = Type.iterator_itermut usize
+  use seq.Seq
+  use mach.int.Int64
+  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = usize
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve7 with type t = ()
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve6 with type t = usize
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve5 with type t = Type.core_option_option (borrowed usize)
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve4 with type t = Type.iterator_itermut usize
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve3 with type t = Seq.seq (borrowed usize)
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve2 with type t = Type.creusotcontracts_logic_ghost_ghost (Type.iterator_itermut usize)
+  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve1 with type t = Type.iterator_itermut usize
+  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = Type.creusotcontracts_std1_vec_vec usize
+  clone CreusotContracts_Std1_Vec_Impl0_Model as Model2 with type t = usize
+  clone CreusotContracts_Logic_Model_Impl1_Model as Model3 with type t = seq usize,
+  type ModelTy0.modelTy = ModelTy0.modelTy, function Model0.model = Model1.model
+  clone Iterator_Impl1_Completed as Completed0 with type t = usize, function Model0.model = Model3.model
+  clone Iterator_IterMut_Interface as IterMut0 with type t = usize, function Model0.model = Model1.model,
+  function Model1.model = Model2.model
+  clone Iterator_Impl1_Next_Interface as Next0 with type t = usize,
+  predicate Completed0.completed = Completed0.completed, predicate Produces0.produces = Produces0.produces
+  clone CreusotContracts_Logic_Ghost_Impl1_Record_Interface as Record0 with type t = Type.iterator_itermut usize,
+  function Model0.model = Model0.model
+  let rec cfg all_zero [@cfg:stackify] (v : borrowed (Type.creusotcontracts_std1_vec_vec usize)) : () =
+  var _0 : ();
+  var v_1 : borrowed (Type.creusotcontracts_std1_vec_vec usize);
+  var it_2 : Type.iterator_itermut usize;
+  var _3 : borrowed (Type.creusotcontracts_std1_vec_vec usize);
+  var it_old_4 : Type.creusotcontracts_logic_ghost_ghost (Type.iterator_itermut usize);
+  var _5 : Type.iterator_itermut usize;
+  var _6 : Type.iterator_itermut usize;
+  var produced_7 : Seq.seq (borrowed usize);
+  var _8 : ();
+  var _9 : Type.core_option_option (borrowed usize);
+  var _10 : borrowed (Type.iterator_itermut usize);
+  var _11 : isize;
+  var x_12 : borrowed usize;
+  var _13 : ();
+  {
+    v_1 <- v;
+    goto BB0
+  }
+  BB0 {
+    _3 <- borrow_mut ( * v_1);
+    v_1 <- { v_1 with current = ( ^ _3) };
+    it_2 <- IterMut0.iter_mut _3;
+    goto BB1
+  }
+  BB1 {
+    assume { Resolve0.resolve v_1 };
+    _6 <- it_2;
+    _5 <- _6;
+    assume { Resolve1.resolve _6 };
+    it_old_4 <- Record0.record _5;
+    goto BB2
+  }
+  BB2 {
+    assume { Resolve2.resolve it_old_4 };
+    produced_7 <- Seq.empty;
+    assume { Resolve3.resolve produced_7 };
+    goto BB3
+  }
+  BB3 {
+    invariant structural { Produces0.produces (Model0.model it_old_4) produced_7 it_2 };
+    _10 <- borrow_mut it_2;
+    it_2 <-  ^ _10;
+    _9 <- Next0.next _10;
+    goto BB4
+  }
+  BB4 {
+    switch (_9)
+      | Type.Core_Option_Option_None -> goto BB5
+      | Type.Core_Option_Option_Some _ -> goto BB7
+      end
+  }
+  BB5 {
+    assume { Resolve4.resolve it_2 };
+    assume { Resolve5.resolve _9 };
+    _0 <- ();
+    return _0
+  }
+  BB6 {
+    assume { Resolve4.resolve it_2 };
+    assume { Resolve5.resolve _9 };
+    absurd
+  }
+  BB7 {
+    assume { Resolve6.resolve x_12 };
+    x_12 <- Type.core_option_option_Some_0 _9;
+    assume { Resolve5.resolve _9 };
+    (* manual *)
+    produced_7 <- Seq.snoc produced_7 x_12;
+    x_12 <- { x_12 with current = (0 : usize) };
+    assume { Resolve6.resolve x_12 };
+    _8 <- ();
+    assume { Resolve7.resolve _8 };
+    goto BB3
+  }
+
 end
 module Iterator_Impl0_Completed_Interface
   use Type
@@ -143,7 +716,7 @@ module Iterator_Impl0_Completed
   use mach.int.Int
   use prelude.Prelude
   use mach.int.Int64
-  predicate completed (self : Type.iterator_range) = 
+  predicate completed (self : Type.iterator_range) =
     Type.iterator_range_Range_start self >= Type.iterator_range_Range_end self
 end
 module Iterator_Impl0_Produces_Interface
@@ -161,7 +734,7 @@ module Iterator_Impl0_Produces
   use prelude.Prelude
   use mach.int.Int64
   use mach.int.Int32
-  predicate produces (self : Type.iterator_range) (visited : Seq.seq isize) (o : Type.iterator_range) = 
+  predicate produces (self : Type.iterator_range) (visited : Seq.seq isize) (o : Type.iterator_range) =
     Type.iterator_range_Range_end self = Type.iterator_range_Range_end o && Type.iterator_range_Range_start self <= Type.iterator_range_Range_start o && Seq.length visited = Int64.to_int (Type.iterator_range_Range_start o) - Int64.to_int (Type.iterator_range_Range_start self) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Int64.to_int (Seq.get visited i) = Int64.to_int (Type.iterator_range_Range_start self) + i)
 end
 module Iterator_Impl0_ProducesRefl_Interface
@@ -174,7 +747,7 @@ module Iterator_Impl0_ProducesRefl
   use seq.Seq
   use Type
   clone Iterator_Impl0_Produces_Interface as Produces0
-  function produces_refl (a : Type.iterator_range) : () = 
+  function produces_refl (a : Type.iterator_range) : () =
     ()
   axiom produces_refl_spec : forall a : Type.iterator_range . Produces0.produces a Seq.empty a
 end
@@ -226,47 +799,6 @@ module Iterator_Impl0_ProducesTrans_Impl
    = 
     ()
 end
-module CreusotContracts_Logic_Resolve_Impl1_Resolve_Interface
-  type t   
-  use prelude.Prelude
-  predicate resolve (self : borrowed t)
-end
-module CreusotContracts_Logic_Resolve_Impl1_Resolve
-  type t   
-  use prelude.Prelude
-  predicate resolve (self : borrowed t) = 
-     ^ self =  * self
-end
-module CreusotContracts_Logic_Resolve_Resolve_Resolve_Interface
-  type self   
-  predicate resolve (self : self)
-end
-module CreusotContracts_Logic_Resolve_Resolve_Resolve
-  type self   
-  predicate resolve (self : self)
-end
-module CreusotContracts_Logic_Resolve_Impl1
-  type t   
-  use prelude.Prelude
-  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = t
-  clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = borrowed t,
-  predicate resolve = Resolve0.resolve
-end
-module CreusotContracts_Logic_Resolve_Impl2_Resolve_Interface
-  type t   
-  predicate resolve (self : t)
-end
-module CreusotContracts_Logic_Resolve_Impl2_Resolve
-  type t   
-  predicate resolve (self : t) = 
-    true
-end
-module CreusotContracts_Logic_Resolve_Impl2
-  type t   
-  clone CreusotContracts_Logic_Resolve_Impl2_Resolve as Resolve0 with type t = t
-  clone CreusotContracts_Logic_Resolve_Resolve_Resolve as Resolve1 with type self = t,
-  predicate resolve = Resolve0.resolve
-end
 module Iterator_Impl0_Next_Interface
   use Type
   use mach.int.Int
@@ -279,12 +811,11 @@ module Iterator_Impl0_Next_Interface
   val next [@cfg:stackify] (self : borrowed (Type.iterator_range)) : Type.core_option_option isize
     ensures { match (result) with
       | Type.Core_Option_Option_None -> Completed0.completed ( ^ self) && Resolve0.resolve self
-      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not (Completed0.completed ( ^ self))
+      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self) && not (Completed0.completed ( * self))
       end }
     
 end
 module Iterator_Impl0_Next
-  use seq.FreeMonoid
   use Type
   use mach.int.Int
   use prelude.Prelude
@@ -344,312 +875,6 @@ module Iterator_Impl0_Next
   }
   
 end
-module CreusotContracts_Logic_Model_Model_ModelTy
-  type self   
-  type modelTy   
-end
-module CreusotContracts_Logic_Model_Model_Model_Interface
-  type self   
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = self
-  function model (self : self) : ModelTy0.modelTy
-end
-module CreusotContracts_Logic_Model_Model_Model
-  type self   
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = self
-  function model (self : self) : ModelTy0.modelTy
-end
-module CreusotContracts_Logic_Model_Impl1_Model_Interface
-  type t   
-  use prelude.Prelude
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t
-  function model (self : borrowed t) : ModelTy0.modelTy
-end
-module CreusotContracts_Logic_Model_Impl1_Model
-  type t   
-  use prelude.Prelude
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t
-  clone CreusotContracts_Logic_Model_Model_Model_Interface as Model0 with type self = t,
-  type ModelTy0.modelTy = ModelTy0.modelTy
-  function model (self : borrowed t) : ModelTy0.modelTy = 
-    Model0.model ( * self)
-end
-module CreusotContracts_Logic_Model_Impl2_ModelTy
-  type t   
-  use seq.Seq
-  type modelTy  = 
-    Seq.seq t
-end
-module Iterator_Impl1_Completed_Interface
-  type t   
-  use Type
-  predicate completed (self : Type.iterator_itermut t)
-end
-module Iterator_Impl1_Completed
-  type t   
-  use Type
-  use seq.Seq
-  use mach.int.Int
-  use mach.int.Int32
-  use prelude.Prelude
-  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
-  clone CreusotContracts_Logic_Model_Impl1_Model_Interface as Model0 with type t = seq t,
-  type ModelTy0.modelTy = ModelTy0.modelTy
-  predicate completed (self : Type.iterator_itermut t) = 
-    Seq.length (Model0.model (Type.iterator_itermut_IterMut_inner self)) = 0
-end
-module CreusotContracts_Logic_Model_Impl2_Model_Interface
-  type t   
-  use prelude.Prelude
-  use seq.Seq
-  function model (self : seq t) : Seq.seq t
-end
-module CreusotContracts_Logic_Model_Impl2_Model
-  type t   
-  use prelude.Prelude
-  use seq.Seq
-  function model (self : seq t) : Seq.seq t = 
-    Prelude.id self
-end
-module Iterator_Impl1_Produces_Interface
-  type t   
-  use Type
-  use seq.Seq
-  use prelude.Prelude
-  predicate produces (self : Type.iterator_itermut t) (visited : Seq.seq (borrowed t)) (tl : Type.iterator_itermut t)
-end
-module Iterator_Impl1_Produces
-  type t   
-  use Type
-  use seq.Seq
-  use prelude.Prelude
-  use mach.int.Int
-  use seq_ext.SeqExt
-  use mach.int.Int32
-  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
-  predicate produces (self : Type.iterator_itermut t) (visited : Seq.seq (borrowed t)) (tl : Type.iterator_itermut t) = 
-    Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && Seq.(==) (SeqExt.subsequence (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && Seq.(==) (SeqExt.subsequence (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Seq.get (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) i =  * Seq.get visited i && Seq.get (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) i =  ^ Seq.get visited i)
-end
-module CreusotContracts_Logic_Model_Impl2
-  type t   
-  use prelude.Prelude
-  use seq.Seq
-  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
-  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
-  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = seq t, function model = Model0.model,
-  type ModelTy0.modelTy = ModelTy0.modelTy
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = seq t, type modelTy = ModelTy0.modelTy
-end
-module Iterator_Impl1_ProducesRefl_Interface
-  type t   
-  use seq.Seq
-  use Type
-  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
-  function produces_refl (a : Type.iterator_itermut t) : ()
-end
-module Iterator_Impl1_ProducesRefl
-  type t   
-  use seq.Seq
-  use Type
-  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
-  function produces_refl (a : Type.iterator_itermut t) : () = 
-    ()
-  axiom produces_refl_spec : forall a : Type.iterator_itermut t . Produces0.produces a Seq.empty a
-end
-module Iterator_Impl1_ProducesRefl_Impl
-  type t   
-  use seq.Seq
-  use Type
-  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
-  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model0.model
-  let rec ghost function produces_refl (a : Type.iterator_itermut t) : ()
-    ensures { Produces0.produces a Seq.empty a }
-    
-   = 
-    ()
-end
-module Iterator_Impl1_ProducesTrans_Interface
-  type t   
-  use seq.Seq
-  use Type
-  use prelude.Prelude
-  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
-  function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
-    
-end
-module Iterator_Impl1_ProducesTrans
-  type t   
-  use seq.Seq
-  use Type
-  use prelude.Prelude
-  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
-  function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
-    
-   = 
-    ()
-  axiom produces_trans_spec : forall a : Type.iterator_itermut t, ab : Seq.seq (borrowed t), b : Type.iterator_itermut t, bc : Seq.seq (borrowed t), c : Type.iterator_itermut t . Produces0.produces b bc c -> Produces0.produces a ab b -> Produces0.produces a (Seq.(++) ab bc) c
-end
-module Iterator_Impl1_ProducesTrans_Impl
-  type t   
-  use seq.Seq
-  use Type
-  use prelude.Prelude
-  clone CreusotContracts_Logic_Model_Impl2_Model as Model0 with type t = t
-  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model0.model
-  let rec ghost function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
-    requires {Produces0.produces b bc c}
-    requires {Produces0.produces a ab b}
-    ensures { Produces0.produces a (Seq.(++) ab bc) c }
-    
-   = 
-    ()
-end
-module CreusotContracts_Logic_Model_Impl1_ModelTy
-  type t   
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t
-  type modelTy  = 
-    ModelTy0.modelTy
-end
-module CreusotContracts_Logic_Model_Impl1
-  type t   
-  use prelude.Prelude
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy2 with type self = t
-  clone CreusotContracts_Logic_Model_Model_Model as Model2 with type self = t, type ModelTy0.modelTy = ModelTy2.modelTy
-  clone CreusotContracts_Logic_Model_Impl1_Model as Model0 with type t = t, type ModelTy0.modelTy = ModelTy2.modelTy,
-  function Model0.model = Model2.model
-  clone CreusotContracts_Logic_Model_Impl1_ModelTy as ModelTy0 with type t = t, type ModelTy0.modelTy = ModelTy2.modelTy
-  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = borrowed t, function model = Model0.model,
-  type ModelTy0.modelTy = ModelTy0.modelTy
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = borrowed t,
-  type modelTy = ModelTy0.modelTy
-end
-module CreusotContracts_Logic_Seq_Impl1_Tail_Interface
-  type t   
-  use seq.Seq
-  function tail (self : Seq.seq t) : Seq.seq t
-end
-module CreusotContracts_Logic_Seq_Impl1_Tail
-  type t   
-  use seq.Seq
-  use mach.int.Int
-  use mach.int.Int32
-  use seq_ext.SeqExt
-  function tail (self : Seq.seq t) : Seq.seq t = 
-    SeqExt.subsequence self 1 (Seq.length self)
-end
-module Core_Slice_Impl0_TakeFirstMut_Interface
-  type t   
-  use Type
-  use prelude.Prelude
-  use mach.int.Int
-  use mach.int.Int32
-  use seq.Seq
-  clone CreusotContracts_Logic_Seq_Impl1_Tail_Interface as Tail0 with type t = t
-  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
-  val take_first_mut [@cfg:stackify] (self : borrowed (borrowed (seq t))) : Type.core_option_option (borrowed t)
-    ensures { match (result) with
-      | Type.Core_Option_Option_Some r ->  * r = Seq.get (Model0.model ( *  * self)) 0 &&  ^ r = Seq.get (Model0.model ( ^  * self)) 0 && Seq.length (Model0.model ( *  * self)) > 0 && Seq.length (Model0.model ( ^  * self)) > 0 && Model0.model ( *  ^ self) = Tail0.tail (Model0.model ( *  * self)) && Model0.model ( ^  ^ self) = Tail0.tail (Model0.model ( ^  * self))
-      | Type.Core_Option_Option_None ->  ^ self =  * self && Seq.length (Model0.model ( *  * self)) = 0
-      end }
-    
-end
-module Core_Slice_Impl0_TakeFirstMut
-  type t   
-  use Type
-  use prelude.Prelude
-  use mach.int.Int
-  use mach.int.Int32
-  use seq.Seq
-  clone CreusotContracts_Logic_Seq_Impl1_Tail_Interface as Tail0 with type t = t
-  clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
-  val take_first_mut [@cfg:stackify] (self : borrowed (borrowed (seq t))) : Type.core_option_option (borrowed t)
-    ensures { match (result) with
-      | Type.Core_Option_Option_Some r ->  * r = Seq.get (Model0.model ( *  * self)) 0 &&  ^ r = Seq.get (Model0.model ( ^  * self)) 0 && Seq.length (Model0.model ( *  * self)) > 0 && Seq.length (Model0.model ( ^  * self)) > 0 && Model0.model ( *  ^ self) = Tail0.tail (Model0.model ( *  * self)) && Model0.model ( ^  ^ self) = Tail0.tail (Model0.model ( ^  * self))
-      | Type.Core_Option_Option_None ->  ^ self =  * self && Seq.length (Model0.model ( *  * self)) = 0
-      end }
-    
-end
-module Iterator_Impl1_Next_Interface
-  type t   
-  use Type
-  use prelude.Prelude
-  use seq.Seq
-  clone Iterator_Impl1_Produces_Interface as Produces0 with type t = t
-  clone Iterator_Impl1_Completed_Interface as Completed0 with type t = t
-  val next [@cfg:stackify] (self : borrowed (Type.iterator_itermut t)) : Type.core_option_option (borrowed t)
-    requires {not (Completed0.completed ( * self))}
-    ensures { match (result) with
-      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self)
-      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self)
-      end }
-    
-end
-module Iterator_Impl1_Next
-  type t   
-  use Type
-  use prelude.Prelude
-  use seq.Seq
-  clone CreusotContracts_Logic_Model_Impl2_Model as Model1 with type t = t
-  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model1.model
-  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
-  clone CreusotContracts_Logic_Model_Impl1_Model as Model0 with type t = seq t,
-  type ModelTy0.modelTy = ModelTy0.modelTy, function Model0.model = Model1.model
-  clone Iterator_Impl1_Completed as Completed0 with type t = t, function Model0.model = Model0.model
-  clone CreusotContracts_Logic_Resolve_Impl1_Resolve as Resolve0 with type t = Type.iterator_itermut t
-  clone CreusotContracts_Logic_Seq_Impl1_Tail as Tail0 with type t = t
-  clone Core_Slice_Impl0_TakeFirstMut_Interface as TakeFirstMut0 with type t = t, function Model0.model = Model1.model,
-  function Tail0.tail = Tail0.tail
-  let rec cfg next [@cfg:stackify] (self : borrowed (Type.iterator_itermut t)) : Type.core_option_option (borrowed t)
-    requires {not (Completed0.completed ( * self))}
-    ensures { match (result) with
-      | Type.Core_Option_Option_None -> Completed0.completed ( ^ self)
-      | Type.Core_Option_Option_Some v -> Produces0.produces ( * self) (Seq.singleton v) ( ^ self)
-      end }
-    
-   = 
-  var _0 : Type.core_option_option (borrowed t);
-  var self_1 : borrowed (Type.iterator_itermut t);
-  var _2 : borrowed (borrowed (seq t));
-  {
-    self_1 <- self;
-    goto BB0
-  }
-  BB0 {
-    _2 <- borrow_mut (Type.iterator_itermut_IterMut_inner ( * self_1));
-    self_1 <- { self_1 with current = (let Type.Iterator_IterMut a =  * self_1 in Type.Iterator_IterMut ( ^ _2)) };
-    _0 <- TakeFirstMut0.take_first_mut _2;
-    goto BB1
-  }
-  BB1 {
-    assume { Resolve0.resolve self_1 };
-    return _0
-  }
-  
-end
-module CreusotContracts_Logic_Ghost_Impl0_Model_Interface
-  type t   
-  use Type
-  function model (self : Type.creusotcontracts_logic_ghost_ghost t) : t
-end
-module CreusotContracts_Logic_Ghost_Impl0_Model
-  type t   
-  use Type
-  function model (self : Type.creusotcontracts_logic_ghost_ghost t) : t
-end
-module CreusotContracts_Logic_Ghost_Impl0_ModelTy
-  type t   
-  type modelTy  = 
-    t
-end
-module CreusotContracts_Logic_Ghost_Impl0
-  type t   
-  use Type
-  clone CreusotContracts_Logic_Ghost_Impl0_Model as Model0 with type t = t
-  clone CreusotContracts_Logic_Ghost_Impl0_ModelTy as ModelTy0 with type t = t
-  clone CreusotContracts_Logic_Model_Model_Model as Model1 with type self = Type.creusotcontracts_logic_ghost_ghost t,
-  function model = Model0.model, type ModelTy0.modelTy = ModelTy0.modelTy
-  clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy1 with type self = Type.creusotcontracts_logic_ghost_ghost t,
-  type modelTy = ModelTy0.modelTy
-end
 module Iterator_Impl0_Item
   use mach.int.Int
   use prelude.Prelude
@@ -670,7 +895,7 @@ module Iterator_Impl0
   predicate completed = Completed0.completed
   clone Iterator_Impl0_Item as Item0
   clone Iterator_Iterator_Next_Interface as Next1 with type self = Type.iterator_range, val next = Next0.next,
-  predicate Completed0.completed = Completed0.completed, type Item0.item = Item0.item,
+  type Item0.item = Item0.item, predicate Completed0.completed = Completed0.completed,
   predicate Produces0.produces = Produces0.produces
   clone Iterator_Iterator_ProducesTrans as ProducesTrans1 with type self = Type.iterator_range,
   function produces_trans = ProducesTrans0.produces_trans, predicate Produces0.produces = Produces0.produces,
@@ -681,24 +906,6 @@ module Iterator_Impl0
   clone Iterator_Iterator_Produces as Produces1 with type self = Type.iterator_range,
   predicate produces = Produces0.produces, type Item0.item = Item0.item
   clone Iterator_Iterator_Item as Item1 with type self = Type.iterator_range, type item = Item0.item
-end
-module CreusotContracts_Logic_Ghost_Impl1_Record_Interface
-  type t   
-  use prelude.Prelude
-  use Type
-  clone CreusotContracts_Logic_Ghost_Impl0_Model_Interface as Model0 with type t = t
-  val record [@cfg:stackify] (a : t) : Type.creusotcontracts_logic_ghost_ghost t
-    ensures { Model0.model result = a }
-    
-end
-module CreusotContracts_Logic_Ghost_Impl1_Record
-  type t   
-  use prelude.Prelude
-  use Type
-  clone CreusotContracts_Logic_Ghost_Impl0_Model_Interface as Model0 with type t = t
-  val record [@cfg:stackify] (a : t) : Type.creusotcontracts_logic_ghost_ghost t
-    ensures { Model0.model result = a }
-    
 end
 module CreusotContracts_Logic_Seq_Impl1_Push_Interface
   type t   
@@ -759,14 +966,14 @@ module Iterator_SumRange
   var it_old_6 : Type.creusotcontracts_logic_ghost_ghost (Type.iterator_range);
   var _7 : Type.iterator_range;
   var _8 : Type.iterator_range;
-  ghost var produced_9 : Seq.seq isize;
+  var produced_9 : Seq.seq isize;
   var _10 : ();
   var _11 : Type.core_option_option isize;
   var _12 : borrowed (Type.iterator_range);
   var _13 : isize;
   var j_14 : isize;
-  ghost var _15 : Seq.seq isize;
-  ghost var _16 : Seq.seq isize;
+  var _15 : Seq.seq isize;
+  var _16 : Seq.seq isize;
   var _17 : isize;
   var _18 : ();
   {
@@ -843,43 +1050,4 @@ module Iterator_SumRange
     goto BB2
   }
   
-end
-module Iterator_Impl1_Item
-  type t   
-  use prelude.Prelude
-  type item  = 
-    borrowed t
-end
-module Iterator_Impl1
-  type t   
-  use prelude.Prelude
-  use seq.Seq
-  use Type
-  clone CreusotContracts_Logic_Model_Impl2_Model as Model1 with type t = t
-  clone Iterator_Impl1_Produces as Produces0 with type t = t, function Model0.model = Model1.model
-  clone Iterator_Impl1_ProducesTrans as ProducesTrans0 with type t = t,
-  predicate Produces0.produces = Produces0.produces, axiom .
-  clone Iterator_Impl1_ProducesRefl as ProducesRefl0 with type t = t, predicate Produces0.produces = Produces0.produces,
-  axiom .
-  clone CreusotContracts_Logic_Model_Impl2_ModelTy as ModelTy0 with type t = t
-  clone CreusotContracts_Logic_Model_Impl1_Model as Model0 with type t = seq t,
-  type ModelTy0.modelTy = ModelTy0.modelTy, function Model0.model = Model1.model
-  clone Iterator_Impl1_Completed as Completed0 with type t = t, function Model0.model = Model0.model
-  clone Iterator_Impl1_Next_Interface as Next0 with type t = t, predicate Completed0.completed = Completed0.completed,
-  predicate Produces0.produces = Produces0.produces
-  clone Iterator_Iterator_Completed as Completed1 with type self = Type.iterator_itermut t,
-  predicate completed = Completed0.completed
-  clone Iterator_Impl1_Item as Item0 with type t = t
-  clone Iterator_Iterator_Next_Interface as Next1 with type self = Type.iterator_itermut t, val next = Next0.next,
-  predicate Completed0.completed = Completed0.completed, type Item0.item = Item0.item,
-  predicate Produces0.produces = Produces0.produces
-  clone Iterator_Iterator_ProducesTrans as ProducesTrans1 with type self = Type.iterator_itermut t,
-  function produces_trans = ProducesTrans0.produces_trans, predicate Produces0.produces = Produces0.produces,
-  type Item0.item = Item0.item, axiom .
-  clone Iterator_Iterator_ProducesRefl as ProducesRefl1 with type self = Type.iterator_itermut t,
-  function produces_refl = ProducesRefl0.produces_refl, predicate Produces0.produces = Produces0.produces,
-  type Item0.item = Item0.item, axiom .
-  clone Iterator_Iterator_Produces as Produces1 with type self = Type.iterator_itermut t,
-  predicate produces = Produces0.produces, type Item0.item = Item0.item
-  clone Iterator_Iterator_Item as Item1 with type self = Type.iterator_itermut t, type item = Item0.item
 end
