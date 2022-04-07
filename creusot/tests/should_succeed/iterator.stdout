@@ -173,7 +173,7 @@ module Iterator_Impl1_Produces
   use mach.int.Int32
   clone CreusotContracts_Logic_Model_Impl2_Model_Interface as Model0 with type t = t
   predicate produces (self : Type.iterator_itermut t) (visited : Seq.seq (borrowed t)) (tl : Type.iterator_itermut t) =
-    Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (=) (SeqExt.subsequence (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && (=) (SeqExt.subsequence (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Seq.get (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) i =  * Seq.get visited i && Seq.get (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) i =  ^ Seq.get visited i)
+    Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) = Seq.length visited + Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (==) (SeqExt.subsequence (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( * Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( * Type.iterator_itermut_IterMut_inner tl)) && (==) (SeqExt.subsequence (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) (Seq.length visited) (Seq.length (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)))) (Model0.model ( ^ Type.iterator_itermut_IterMut_inner tl)) && (forall i : (int) . 0 <= i && i < Seq.length visited -> Seq.get (Model0.model ( * Type.iterator_itermut_IterMut_inner self)) i =  * Seq.get visited i && Seq.get (Model0.model ( ^ Type.iterator_itermut_IterMut_inner self)) i =  ^ Seq.get visited i)
 end
 module CreusotContracts_Logic_Model_Model_ModelTy
   type self
@@ -310,6 +310,7 @@ module Iterator_Impl1_ProducesTrans
 end
 module Iterator_Impl1_ProducesTrans_Impl
   type t
+
   use seq.Seq
   use Type
   use prelude.Prelude
@@ -319,14 +320,26 @@ module Iterator_Impl1_ProducesTrans_Impl
   use seq.FreeMonoid
   use seq.ToList
   use seq.OfList
+
   let rec ghost function produces_trans (a : Type.iterator_itermut t) (ab : Seq.seq (borrowed t)) (b : Type.iterator_itermut t) (bc : Seq.seq (borrowed t)) (c : Type.iterator_itermut t) : ()
     requires {Produces0.produces b bc c}
     requires {Produces0.produces a ab b}
+    variant { Seq.length ab }
     ensures { Produces0.produces a (Seq.(++) ab bc) c }
     
-   = 
-    ()
+   = if ab = Seq.empty then if a = b then () else absurd else 
+   let init = ab[..1] in
+   let tl = ab[1..] in
+   assert { init ++ tl = ab };
+   let a' = (Iterator_IterMut (borrowed'mk 
+      ( * (iterator_itermut_IterMut_inner a))[1..] 
+      (^ (iterator_itermut_IterMut_inner a))[1..])) in
+      assert {  Int.(>=) (Seq.length ( * (iterator_itermut_IterMut_inner a'))) 0 };
+      assert {Produces0.produces a init a'}; 
+        produces_trans a' tl b bc c
+
 end
+
 module CreusotContracts_Logic_Model_Impl1_ModelTy
   type t
   clone CreusotContracts_Logic_Model_Model_ModelTy as ModelTy0 with type self = t

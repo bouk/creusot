@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE why3session PUBLIC "-//Why3//proof session v5//EN"
+"http://why3.lri.fr/why3session.dtd">
+<why3session shape_version="6">
+<prover id="0" name="CVC4" version="1.8" timelimit="1" steplimit="0" memlimit="1000"/>
+<prover id="1" name="Z3" version="4.8.10" timelimit="1" steplimit="0" memlimit="1000"/>
+<file format="mlcfg">
+<path name=".."/><path name="iterator.stdout"/>
+<theory name="Iterator_Impl1_ProducesRefl_Impl">
+ <goal name="produces_refl&#39;vc" expl="VC for produces_refl">
+ </goal>
+</theory>
+<theory name="Iterator_Impl1_ProducesTrans_Impl">
+ <goal name="produces_trans&#39;vc" expl="VC for produces_trans">
+ <transf name="split_vc" >
+  <goal name="produces_trans&#39;vc.0" expl="unreachable point">
+  <proof prover="0"><result status="timeout" time="1.00" steps="135081"/></proof>
+  <proof prover="1"><result status="timeout" time="1.00"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.1" expl="precondition" proved="true">
+  <proof prover="1"><result status="valid" time="0.05" steps="273689"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.2" expl="precondition" proved="true">
+  <proof prover="1"><result status="valid" time="0.05" steps="273689"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.3" expl="assertion" proved="true">
+  <proof prover="1"><result status="valid" time="0.12" steps="598492"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.4" expl="precondition" proved="true">
+  <proof prover="0"><result status="valid" time="0.20" steps="56028"/></proof>
+  <proof prover="1"><result status="timeout" time="1.00"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.5" expl="precondition" proved="true">
+  <proof prover="0"><result status="valid" time="0.20" steps="56039"/></proof>
+  <proof prover="1"><result status="timeout" time="1.00"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.6" expl="assertion" proved="true">
+  <proof prover="1"><result status="valid" time="0.04" steps="298170"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.7" expl="assertion">
+  <proof prover="0"><result status="timeout" time="1.00" steps="150214"/></proof>
+  <proof prover="1"><result status="timeout" time="1.00"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.8" expl="variant decrease" proved="true">
+  <proof prover="0"><result status="valid" time="0.30" steps="67615"/></proof>
+  <proof prover="1"><result status="timeout" time="1.00"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.9" expl="precondition" proved="true">
+  <proof prover="1"><result status="valid" time="0.01" steps="14543"/></proof>
+  </goal>
+  <goal name="produces_trans&#39;vc.10" expl="precondition" proved="true">
+  <proof prover="0" obsolete="true"><result status="timeout" time="1.00" steps="143165"/></proof>
+  <proof prover="1" obsolete="true"><result status="timeout" time="1.00"/></proof>
+  <transf name="unfold" proved="true" arg1="produces" arg2="in" arg3="Requires1">
+   <goal name="produces_trans&#39;vc.10.0" expl="precondition" proved="true">
+   <transf name="unfold" proved="true" arg1="produces">
+    <goal name="produces_trans&#39;vc.10.0.0" expl="VC for produces_trans" proved="true">
+    <transf name="split_vc" proved="true" >
+     <goal name="produces_trans&#39;vc.10.0.0.0" expl="VC for produces_trans" proved="true">
+     <proof prover="0"><result status="valid" time="0.28" steps="54520"/></proof>
+     <proof prover="1"><result status="timeout" time="1.00"/></proof>
+     </goal>
+     <goal name="produces_trans&#39;vc.10.0.0.1" expl="VC for produces_trans" proved="true">
+     <proof prover="1"><result status="valid" time="1.11" steps="3332968"/></proof>
+     </goal>
+     <goal name="produces_trans&#39;vc.10.0.0.2" expl="VC for produces_trans" proved="true">
+     <proof prover="0"><result status="valid" time="0.52" steps="92517"/></proof>
+     <proof prover="1"><result status="timeout" time="1.00"/></proof>
+     </goal>
+     <goal name="produces_trans&#39;vc.10.0.0.3" expl="VC for produces_trans" proved="true">
+     <proof prover="0"><result status="valid" time="0.50" steps="91187"/></proof>
+     <proof prover="1"><result status="timeout" time="1.00"/></proof>
+     </goal>
+     <goal name="produces_trans&#39;vc.10.0.0.4" expl="VC for produces_trans" proved="true">
+     <proof prover="0"><result status="valid" time="0.78" steps="137477"/></proof>
+     <proof prover="1"><result status="timeout" time="1.00"/></proof>
+     </goal>
+     <goal name="produces_trans&#39;vc.10.0.0.5" expl="VC for produces_trans" proved="true">
+     <proof prover="0"><result status="valid" time="0.77" steps="137982"/></proof>
+     <proof prover="1"><result status="timeout" time="1.00"/></proof>
+     </goal>
+    </transf>
+    </goal>
+   </transf>
+   </goal>
+  </transf>
+  </goal>
+  <goal name="produces_trans&#39;vc.11" expl="postcondition">
+  <proof prover="0" obsolete="true"><result status="timeout" time="1.00" steps="149825"/></proof>
+  <proof prover="1" obsolete="true"><result status="timeout" time="1.00"/></proof>
+  <transf name="split_vc" >
+   <goal name="produces_trans&#39;vc.11.0" expl="postcondition" proved="true">
+   <proof prover="0"><result status="valid" time="0.16" steps="36092"/></proof>
+   </goal>
+   <goal name="produces_trans&#39;vc.11.1" expl="postcondition">
+   <proof prover="0"><result status="timeout" time="1.00" steps="144933"/></proof>
+   <proof prover="1"><result status="timeout" time="1.00"/></proof>
+   </goal>
+  </transf>
+  </goal>
+ </transf>
+ </goal>
+</theory>
+<theory name="Iterator_Impl1_Next">
+ <goal name="next&#39;vc" expl="VC for next">
+ </goal>
+</theory>
+<theory name="Iterator_Impl1">
+ <goal name="Next1.next&#39;refn&#39;vc" expl="VC for next&#39;refn">
+ </goal>
+</theory>
+<theory name="Iterator_AllZero">
+ <goal name="all_zero&#39;vc" expl="VC for all_zero">
+ </goal>
+</theory>
+<theory name="Iterator_Impl0_ProducesRefl_Impl">
+ <goal name="produces_refl&#39;vc" expl="VC for produces_refl">
+ </goal>
+</theory>
+<theory name="Iterator_Impl0_ProducesTrans_Impl">
+ <goal name="produces_trans&#39;vc" expl="VC for produces_trans">
+ </goal>
+</theory>
+<theory name="Iterator_Impl0_Next">
+ <goal name="next&#39;vc" expl="VC for next">
+ </goal>
+</theory>
+<theory name="Iterator_Impl0">
+ <goal name="Next1.next&#39;refn&#39;vc" expl="VC for next&#39;refn">
+ </goal>
+</theory>
+<theory name="Iterator_SumRange">
+ <goal name="sum_range&#39;vc" expl="VC for sum_range">
+ </goal>
+</theory>
+</file>
+</why3session>
