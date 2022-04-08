@@ -3,7 +3,7 @@ extern crate creusot_contracts;
 use creusot_contracts::*;
 use creusot_contracts::std::*;
 
-trait Iterator: Sized {
+trait Iterator {
     type Item;
 
     #[predicate]
@@ -125,7 +125,7 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 
     #[predicate]
     fn completed(self) -> bool {
-        pearlite! { (@(self.inner)).len() === 0 }
+        pearlite! { @self.inner == Seq::EMPTY }
     }
 
     #[predicate]
@@ -152,8 +152,8 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 
     // #[requires((@*(*self).inner).len() === (@^(*self).inner).len())]
     #[ensures(match result {
-      None => (^self).completed(),
-      Some(v) => (*self).produces(Seq::singleton(v), ^self)
+      None => (*self).completed() && self.resolve(),
+      Some(v) => (*self).produces(Seq::singleton(v), ^self) && !(*self).completed()
     })]
     // #[ensures((@*(^self).inner).len() === (@^(^self).inner).len())]
     fn next(&mut self) -> Option<Self::Item> {
@@ -205,16 +205,21 @@ extern_spec! {
 #[trusted]
 #[ensures(@*result.inner === @*v)]
 #[ensures(@^result.inner === @^v)]
+#[ensures((@^v).len() === (@v).len())]
 fn iter_mut<'a, T>(v: &'a mut Vec<T>) -> IterMut<'a, T> {
     // IterMut { inner : &mut v[..] }
     panic!()
 }
 
+#[ensures((@^v).len() === (@v).len())]
+#[ensures(forall<i : _> 0 <= i && i < (@v).len() ==> @(@^v)[i] === 0)]
 fn all_zero(v : &mut Vec<usize>) {
     let mut it = iter_mut(v);
     let it_old = Ghost::record(&it);
     let mut produced = Seq::EMPTY;
+
     #[invariant(structural, (@it_old).produces(produced, it))]
+    #[invariant(user, forall<i : Int> 0 <= i && i < produced.len() ==> @^ produced[i] === 0)]
     loop {
         match it.next() {
             Some(x) => {
@@ -241,7 +246,7 @@ fn sum_range(n: isize) -> isize {
         loop {
             match it.next() {
                 Some(j) => {
-                    produced = produced.push(j);
+                    // produced = produced.push(j);
                     i += 1;
                 }
                 None => break,
