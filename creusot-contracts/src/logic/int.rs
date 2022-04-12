@@ -38,6 +38,25 @@ impl Model for u32 {
     }
 }
 
+impl From<u8> for Int {
+    #[logic]
+    #[trusted]
+    #[rustc_diagnostic_item = "u8_to_int"]
+    #[creusot::builtins = "prelude.UInt8.to_int"]
+    fn from(_: u8) -> Self {
+        std::process::abort()
+    }
+}
+impl Model for u8 {
+    type ModelTy = Int;
+    #[logic]
+    #[rustc_diagnostic_item = "u8_model"]
+    #[creusot::builtins = "prelude.UInt8.to_int"]
+    fn model(self) -> Self::ModelTy {
+        Int::from(self)
+    }
+}
+
 impl From<i32> for Int {
     #[logic]
     #[trusted]

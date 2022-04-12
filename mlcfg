@@ -5,9 +5,12 @@ INPUTPATH=$(pwd)/$(basename $1)
 popd > /dev/null
 SCRIPTPATH=$(dirname "$BASH_SOURCE")
 pushd $SCRIPTPATH > /dev/null
-cargo run --bin creusot-rustc -- -Zno-codegen \
+cargo run --bin creusot-rustc -- \
+  -Z \
   --extern creusot_contracts=./target/debug/libcreusot_contracts.rlib \
+  --cfg contracts \
   -Ldependency=./target/debug/deps/ \
   --crate-type=lib \
+  --out-dir ../. \
   $INPUTPATH
 popd > /dev/null

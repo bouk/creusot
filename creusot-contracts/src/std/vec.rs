@@ -57,9 +57,12 @@ impl<T> Vec<T> {
         self.0.swap(i, j)
     }
 
+
     #[trusted]
     #[ensures(match result {
-        Some(t) => (@self) === (@^self).push(t),
+        Some(t) =>
+            (@^self) === (@self).subsequence(0, (@self).len() - 1) &&
+            (@self) === (@^self).push(t),
         None => (@self).len() === (@^self).len() && (@self).len() === 0
     })]
     pub fn pop(&mut self) -> Option<T> {
