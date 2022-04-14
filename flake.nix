@@ -14,6 +14,7 @@
         buildInputs = [
           (rust-bin.fromRustupToolchainFile ./rust-toolchain)
           zlib
+          why3
         ];
       };
     }
